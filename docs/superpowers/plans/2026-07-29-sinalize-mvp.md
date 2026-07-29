@@ -199,11 +199,13 @@ Incluir enums/checks e tabelas: `profiles`, `interpreter_applications`, `appoint
 Trecho crítico do aceite (função RPC):
 
 ```sql
-create or replace function public.accept_appointment(p_appointment_id uuid)
+create schema if not exists private;
+
+create or replace function private.accept_appointment(p_appointment_id uuid)
 returns public.appointments
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -235,6 +237,15 @@ begin
   return v_row;
 end;
 $$;
+
+create or replace function public.accept_appointment(p_appointment_id uuid)
+returns public.appointments
+language sql
+security invoker
+set search_path = ''
+as $$
+  select private.accept_appointment(p_appointment_id);
+$$;
 ```
 
 Trigger após signup:
@@ -247,7 +258,10 @@ begin
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', ''),
-    coalesce(new.raw_user_meta_data->>'role', 'user'),
+    case
+      when new.raw_user_meta_data->>'role' = 'interpreter' then 'interpreter'
+      else 'user'
+    end,
     'light'
   );
   return new;
@@ -255,16 +269,16 @@ end;
 $$;
 ```
 
-**Importante:** depois do insert, uma Server Action deve espelhar `role` em `auth.users.raw_app_meta_data` via admin client (não confiar em `user_metadata` para RLS). Preferir policies baseadas em:
+**Importante:** o trigger nunca aceita `admin` vindo de metadata editável; somente `user` ou `interpreter`, com fallback para `user`. Admin é promovido de forma controlada. Depois do insert, uma Server Action pode espelhar `role` em `auth.users.raw_app_meta_data` via admin client, mas RLS não deve depender de metadata. Preferir policies baseadas em:
 
 ```sql
-create function public.current_role() returns text
-language sql stable security definer set search_path = public as $$
+create function private.current_role() returns text
+language sql stable security definer set search_path = '' as $$
   select role from public.profiles where id = auth.uid();
 $$;
 ```
 
-RLS: dono lê/escreve próprio perfil; intérpretes aprovados leem `appointments` com `status = 'open'`; participantes leem seus appointments; admin lê tudo via `current_role() = 'admin'`. Reviews: `comment` só para `to_profile_id`, `from_profile_id` ou admin; `rating` legível por autenticados. Storage bucket `certificates` privado.
+RLS: dono lê/escreve próprio perfil; intérpretes aprovados leem `appointments` com `status = 'open'`; participantes leem seus appointments; admin lê tudo via `private.current_role() = 'admin'`. Reviews inteiras são visíveis somente ao autor, avaliado ou admin; a exposição pública é somente `profiles.average_rating`, evitando fingir segurança em nível de coluna. Storage bucket `certificates` privado.
 
 - [ ] **Step 2: Aplicar migration no projeto Supabase**
 
