@@ -4,7 +4,7 @@ Aplicação web que conecta pessoas surdas a intérpretes de Libras por videocha
 
 ## Pré-requisitos
 
-- Node.js 20.19.0 ou superior
+- Node.js em uma faixa suportada: `^20.19.0 || ^22.13.0 || >=24.0.0`
 - npm
 - Um projeto no [Supabase](https://supabase.com/dashboard/projects)
 - Credenciais do Jitsi as a Service (JaaS)
