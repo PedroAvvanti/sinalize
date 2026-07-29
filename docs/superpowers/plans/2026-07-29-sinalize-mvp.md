@@ -6,7 +6,7 @@
 
 **Architecture:** Um app Next.js (App Router) com UI React, Server Actions para regras sensíveis, Supabase (Auth, PostgreSQL + RLS, Storage, Realtime) e JaaS apenas na sala. Papéis `user` | `interpreter` | `admin` em `profiles` + `app_metadata`.
 
-**Tech Stack:** Next.js 15, React 19, TypeScript, Tailwind CSS, `@supabase/ssr`, `@supabase/supabase-js`, Vitest, jose (JWT JaaS), next-pwa ou `@ducanh2912/next-pwa`.
+**Tech Stack:** Next.js 16.2.12, React 19.2.8, TypeScript, Tailwind CSS, `@supabase/ssr`, `@supabase/supabase-js`, Vitest, jose (JWT JaaS), next-pwa ou `@ducanh2912/next-pwa`.
 
 **Spec:** `docs/superpowers/specs/2026-07-29-sinalize-mvp-design.md`
 
@@ -22,6 +22,7 @@
 - UI utilizável sem vídeos em Libras; motivos em lista + texto opcional
 - Linguagem simples; erros com texto + ícone; nunca só cor
 - README deve permitir rodar o projeto na máquina local
+- Implementação autorizada diretamente na branch `main` pelo usuário em 2026-07-29
 
 ---
 
