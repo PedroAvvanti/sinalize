@@ -1,7 +1,7 @@
 # Sinalize — Especificação de Design do MVP
 
 **Data:** 2026-07-29  
-**Status:** Aprovado em brainstorming; aguardando revisão do arquivo antes do plano de implementação  
+**Status:** Aprovado; plano de implementação em `docs/superpowers/plans/2026-07-29-sinalize-mvp.md`  
 **Produto:** Aplicação web PWA de mediação comunicativa entre pessoas surdas e intérpretes de Libras
 
 ---
