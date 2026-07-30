@@ -4,6 +4,7 @@ import { useId, useState, useTransition } from "react";
 
 import { updateThemePreference } from "@/actions/profile";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { resolveThemeUpdate } from "@/lib/theme";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -20,15 +21,17 @@ export function ThemeToggle() {
     setTheme(nextTheme);
 
     startTransition(async () => {
-      const result = await updateThemePreference(nextTheme);
-
-      if (!result.ok) {
-        setTheme(previousTheme);
-        setError(result.error);
-        return;
-      }
+      const result = await resolveThemeUpdate(
+        previousTheme,
+        nextTheme,
+        updateThemePreference,
+      );
 
       setTheme(result.theme);
+
+      if (result.error) {
+        setError(result.error);
+      }
     });
   }
 

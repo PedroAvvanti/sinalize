@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   isThemePreference,
   normalizeThemePreference,
+  resolveThemeUpdate,
 } from "../../src/lib/theme";
 
 describe("isThemePreference", () => {
@@ -30,4 +31,17 @@ describe("normalizeThemePreference", () => {
       expect(normalizeThemePreference(theme)).toBe("light");
     },
   );
+});
+
+describe("resolveThemeUpdate", () => {
+  it("reverte o tema e informa erro quando a persistência rejeita", async () => {
+    const result = await resolveThemeUpdate("light", "dark", async () => {
+      throw new Error("network unavailable");
+    });
+
+    expect(result).toEqual({
+      theme: "light",
+      error: "Não foi possível salvar o tema. Tente novamente.",
+    });
+  });
 });

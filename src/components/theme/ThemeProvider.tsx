@@ -3,11 +3,12 @@
 import {
   createContext,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { useServerInsertedHTML } from "next/navigation";
 
 import type { ThemePreference } from "@/types/database";
 
@@ -26,8 +27,16 @@ export function ThemeProvider({
   initialTheme: ThemePreference;
 }) {
   const [theme, setTheme] = useState(initialTheme);
+  const initialThemeScript = `document.documentElement.dataset.theme=${JSON.stringify(initialTheme)};`;
 
-  useEffect(() => {
+  useServerInsertedHTML(() => (
+    <script
+      data-sinalize-theme=""
+      dangerouslySetInnerHTML={{ __html: initialThemeScript }}
+    />
+  ));
+
+  useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
