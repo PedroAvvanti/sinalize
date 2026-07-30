@@ -8,7 +8,8 @@ type CertificateInput = {
   name: string;
   type: string;
   size: number;
-  header: Uint8Array;
+  start: Uint8Array;
+  end: Uint8Array;
 };
 
 type CertificateValidation =
@@ -24,34 +25,46 @@ const MIME_CONFIG: Record<
   {
     extensions: readonly string[];
     storedExtension: CertificateExtension;
-    matchesHeader: (header: Uint8Array) => boolean;
+    matchesHeader: (start: Uint8Array) => boolean;
+    matchesStructure: (input: CertificateInput) => boolean;
   }
 > = {
   "application/pdf": {
     extensions: ["pdf"],
     storedExtension: "pdf",
-    matchesHeader: (header) =>
-      matchesBytes(header, [0x25, 0x50, 0x44, 0x46, 0x2d]),
+    matchesHeader: (start) =>
+      matchesBytes(start, [0x25, 0x50, 0x44, 0x46, 0x2d]),
+    matchesStructure: ({ end }) =>
+      matchesSuffix(trimTrailingWhitespace(end), [
+        0x25, 0x25, 0x45, 0x4f, 0x46,
+      ]),
   },
   "image/jpeg": {
     extensions: ["jpg", "jpeg"],
     storedExtension: "jpg",
-    matchesHeader: (header) => matchesBytes(header, [0xff, 0xd8, 0xff]),
+    matchesHeader: (start) => matchesBytes(start, [0xff, 0xd8, 0xff]),
+    matchesStructure: ({ end }) => matchesSuffix(end, [0xff, 0xd9]),
   },
   "image/png": {
     extensions: ["png"],
     storedExtension: "png",
-    matchesHeader: (header) =>
-      matchesBytes(header, [
+    matchesHeader: (start) =>
+      matchesBytes(start, [
         0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+      ]),
+    matchesStructure: ({ end }) =>
+      matchesSuffix(end, [
+        0, 0, 0, 0, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
       ]),
   },
   "image/webp": {
     extensions: ["webp"],
     storedExtension: "webp",
-    matchesHeader: (header) =>
-      matchesBytes(header, [0x52, 0x49, 0x46, 0x46]) &&
-      matchesBytes(header, [0x57, 0x45, 0x42, 0x50], 8),
+    matchesHeader: (start) =>
+      matchesBytes(start, [0x52, 0x49, 0x46, 0x46]) &&
+      matchesBytes(start, [0x57, 0x45, 0x42, 0x50], 8),
+    matchesStructure: ({ start, size }) =>
+      start.length >= 12 && readUint32LittleEndian(start, 4) + 8 === size,
   },
 };
 
@@ -59,11 +72,40 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function matchesBytes(
-  header: Uint8Array,
+  bytes: Uint8Array,
   expected: readonly number[],
   offset = 0,
 ) {
-  return expected.every((byte, index) => header[offset + index] === byte);
+  return expected.every((byte, index) => bytes[offset + index] === byte);
+}
+
+function matchesSuffix(bytes: Uint8Array, expected: readonly number[]) {
+  return (
+    bytes.length >= expected.length &&
+    matchesBytes(bytes, expected, bytes.length - expected.length)
+  );
+}
+
+function trimTrailingWhitespace(bytes: Uint8Array) {
+  let end = bytes.length;
+
+  while (
+    end > 0 &&
+    [0x09, 0x0a, 0x0c, 0x0d, 0x20].includes(bytes[end - 1])
+  ) {
+    end -= 1;
+  }
+
+  return bytes.subarray(0, end);
+}
+
+function readUint32LittleEndian(bytes: Uint8Array, offset: number) {
+  return (
+    bytes[offset] +
+    bytes[offset + 1] * 2 ** 8 +
+    bytes[offset + 2] * 2 ** 16 +
+    bytes[offset + 3] * 2 ** 24
+  );
 }
 
 function fileExtension(name: string) {
@@ -101,10 +143,17 @@ export function validateCertificate(
     };
   }
 
-  if (!config.matchesHeader(input.header)) {
+  if (!config.matchesHeader(input.start)) {
     return {
       ok: false,
       error: "O conteúdo do arquivo não corresponde ao tipo informado.",
+    };
+  }
+
+  if (!config.matchesStructure(input)) {
+    return {
+      ok: false,
+      error: "O arquivo parece estar incompleto ou corrompido.",
     };
   }
 
@@ -137,20 +186,28 @@ export function resolveApplicationView(
   return status ?? "upload";
 }
 
+export function isActiveApplicationConflict(
+  error: { code?: string | null } | null | undefined,
+) {
+  return error?.code === "23505";
+}
+
 export function resolveInterpreterRedirect(
   pathname: string,
   status: ApplicationStatus | null,
+  lookupFailed = false,
 ): string | null {
   const onboardingPath = "/app/interpreter/onboarding";
+  const approved = !lookupFailed && status === "approved";
 
   if (pathname === onboardingPath) {
-    return status === "approved" ? "/app/interpreter" : null;
+    return approved ? "/app/interpreter" : null;
   }
 
   if (
     (pathname === "/app/interpreter" ||
       pathname.startsWith("/app/interpreter/")) &&
-    status !== "approved"
+    !approved
   ) {
     return onboardingPath;
   }

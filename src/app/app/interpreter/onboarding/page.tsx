@@ -33,6 +33,7 @@ export default async function InterpreterOnboardingPage() {
     .select("status, rejection_reason, created_at")
     .eq("profile_id", userId)
     .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .limit(1)
     .maybeSingle();
 

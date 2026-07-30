@@ -22,6 +22,13 @@ function isAppPath(pathname: string) {
   return pathname === "/app" || pathname.startsWith("/app/");
 }
 
+function isInterpreterPath(pathname: string) {
+  return (
+    pathname === "/app/interpreter" ||
+    pathname.startsWith("/app/interpreter/")
+  );
+}
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -73,6 +80,16 @@ export async function proxy(request: NextRequest) {
   );
 
   if (profileAccess.kind === "indeterminate") {
+    if (
+      isInterpreterPath(pathname) &&
+      pathname !== "/app/interpreter/onboarding"
+    ) {
+      return redirectWithCookies(
+        response,
+        new URL("/app/interpreter/onboarding", request.url),
+      );
+    }
+
     return response;
   }
 
@@ -104,31 +121,27 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  if (
-    role === "interpreter" &&
-    (pathname === "/app/interpreter" ||
-      pathname.startsWith("/app/interpreter/"))
-  ) {
+  if (role === "interpreter" && isInterpreterPath(pathname)) {
     const { data: application, error: applicationError } = await supabase
       .from("interpreter_applications")
       .select("status")
       .eq("profile_id", userId)
       .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (!applicationError) {
-      const interpreterRedirect = resolveInterpreterRedirect(
-        pathname,
-        application?.status ?? null,
-      );
+    const interpreterRedirect = resolveInterpreterRedirect(
+      pathname,
+      application?.status ?? null,
+      Boolean(applicationError),
+    );
 
-      if (interpreterRedirect) {
-        return redirectWithCookies(
-          response,
-          new URL(interpreterRedirect, request.url),
-        );
-      }
+    if (interpreterRedirect) {
+      return redirectWithCookies(
+        response,
+        new URL(interpreterRedirect, request.url),
+      );
     }
   }
 

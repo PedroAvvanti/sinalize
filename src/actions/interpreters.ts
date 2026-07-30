@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 
 import {
   buildCertificatePath,
+  isActiveApplicationConflict,
   validateCertificate,
 } from "@/lib/interpreters/application";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type InterpreterApplicationActionState = {
@@ -23,14 +25,20 @@ export async function submitInterpreterApplication(
     return { error: "Escolha um certificado para enviar." };
   }
 
-  const header = new Uint8Array(
+  const start = new Uint8Array(
     await certificate.slice(0, 12).arrayBuffer(),
+  );
+  const end = new Uint8Array(
+    await certificate
+      .slice(Math.max(0, certificate.size - 64), certificate.size)
+      .arrayBuffer(),
   );
   const validation = validateCertificate({
     name: certificate.name,
     type: certificate.type,
     size: certificate.size,
-    header,
+    start,
+    end,
   });
 
   if (!validation.ok) {
@@ -59,9 +67,6 @@ export async function submitInterpreterApplication(
     };
   }
 
-  // Sem uma restrição única parcial no schema, esta consulta torna reenvios
-  // sequenciais idempotentes. Requisições realmente simultâneas ainda
-  // dependem de uma futura garantia transacional no banco.
   const { data: activeApplication, error: applicationLookupError } =
     await supabase
       .from("interpreter_applications")
@@ -69,6 +74,7 @@ export async function submitInterpreterApplication(
       .eq("profile_id", userId)
       .in("status", ["pending", "approved"])
       .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
       .limit(1)
       .maybeSingle();
 
@@ -86,12 +92,30 @@ export async function submitInterpreterApplication(
     return { submitted: true };
   }
 
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("SUPABASE_SERVICE_ROLE_KEY não está configurada.");
+    return {
+      error: "Não foi possível processar o envio. Tente novamente mais tarde.",
+    };
+  }
+
+  let admin: ReturnType<typeof createAdminClient>;
+
+  try {
+    admin = createAdminClient();
+  } catch {
+    console.error("Não foi possível inicializar o client administrativo.");
+    return {
+      error: "Não foi possível processar o envio. Tente novamente mais tarde.",
+    };
+  }
+
   const certificatePath = buildCertificatePath(
     userId,
     crypto.randomUUID(),
     validation.extension,
   );
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await admin.storage
     .from("certificates")
     .upload(certificatePath, certificate, {
       contentType: validation.contentType,
@@ -105,7 +129,7 @@ export async function submitInterpreterApplication(
     };
   }
 
-  const { error: insertError } = await supabase
+  const { error: insertError } = await admin
     .from("interpreter_applications")
     .insert({
       profile_id: userId,
@@ -114,7 +138,7 @@ export async function submitInterpreterApplication(
     });
 
   if (insertError) {
-    const { error: cleanupError } = await supabase.storage
+    const { error: cleanupError } = await admin.storage
       .from("certificates")
       .remove([certificatePath]);
 
@@ -122,6 +146,12 @@ export async function submitInterpreterApplication(
       code: insertError.code,
       cleanupCode: cleanupError?.statusCode,
     });
+
+    if (isActiveApplicationConflict(insertError)) {
+      revalidatePath("/app/interpreter/onboarding");
+      return { submitted: true };
+    }
+
     return {
       error:
         "O certificado não foi registrado. Tente novamente antes de reenviar.",
