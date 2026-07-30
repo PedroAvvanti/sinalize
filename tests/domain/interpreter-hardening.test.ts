@@ -100,9 +100,12 @@ describe("caminhos privilegiados e gates", () => {
     );
   });
 
-  it("trata conflito único removendo o objeto recém-enviado", () => {
-    expect(action).toContain("isActiveApplicationConflict");
+  it("só trata conflito único como sucesso após remover o objeto", () => {
+    expect(action).toContain("canReturnIdempotentApplicationSuccess");
     expect(action).toMatch(/insertError[\s\S]+admin\.storage[\s\S]+\.remove\(/);
+    expect(action).toContain(
+      "canReturnIdempotentApplicationSuccess(insertError, cleanupError)",
+    );
   });
 
   it.each([

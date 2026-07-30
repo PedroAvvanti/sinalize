@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import {
   buildCertificatePath,
-  isActiveApplicationConflict,
+  canReturnIdempotentApplicationSuccess,
   validateCertificate,
 } from "@/lib/interpreters/application";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -147,9 +147,17 @@ export async function submitInterpreterApplication(
       cleanupCode: cleanupError?.statusCode,
     });
 
-    if (isActiveApplicationConflict(insertError)) {
+    if (
+      canReturnIdempotentApplicationSuccess(insertError, cleanupError)
+    ) {
       revalidatePath("/app/interpreter/onboarding");
       return { submitted: true };
+    }
+
+    if (insertError.code === "23505" && cleanupError) {
+      return {
+        error: "Não foi possível concluir o envio. Tente novamente.",
+      };
     }
 
     return {

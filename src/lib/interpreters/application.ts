@@ -192,6 +192,13 @@ export function isActiveApplicationConflict(
   return error?.code === "23505";
 }
 
+export function canReturnIdempotentApplicationSuccess(
+  insertError: { code?: string | null } | null | undefined,
+  cleanupError: unknown,
+) {
+  return isActiveApplicationConflict(insertError) && !cleanupError;
+}
+
 export function resolveInterpreterRedirect(
   pathname: string,
   status: ApplicationStatus | null,

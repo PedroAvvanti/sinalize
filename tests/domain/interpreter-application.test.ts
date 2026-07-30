@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   MAX_CERTIFICATE_SIZE,
   buildCertificatePath,
+  canReturnIdempotentApplicationSuccess,
   isActiveApplicationConflict,
   resolveApplicationView,
   resolveInterpreterRedirect,
@@ -217,6 +218,29 @@ describe("isActiveApplicationConflict", () => {
 
   it("não classifica outros erros como conflito idempotente", () => {
     expect(isActiveApplicationConflict({ code: "42501" })).toBe(false);
+  });
+});
+
+describe("canReturnIdempotentApplicationSuccess", () => {
+  it("aceita conflito único quando a limpeza do objeto termina sem erro", () => {
+    expect(
+      canReturnIdempotentApplicationSuccess({ code: "23505" }, null),
+    ).toBe(true);
+  });
+
+  it("rejeita sucesso idempotente quando a limpeza do objeto falha", () => {
+    expect(
+      canReturnIdempotentApplicationSuccess(
+        { code: "23505" },
+        { statusCode: "500" },
+      ),
+    ).toBe(false);
+  });
+
+  it("não transforma outros erros de insert em sucesso", () => {
+    expect(
+      canReturnIdempotentApplicationSuccess({ code: "42501" }, null),
+    ).toBe(false);
   });
 });
 
