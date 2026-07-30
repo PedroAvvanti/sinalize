@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { decideProfileAccess } from "@/lib/auth/policy";
+import { resolveInterpreterRedirect } from "@/lib/interpreters/application";
 import type { Database } from "@/types/database";
 
 function redirectWithCookies(
@@ -101,6 +102,34 @@ export async function proxy(request: NextRequest) {
       response,
       new URL(homePath, request.url),
     );
+  }
+
+  if (
+    role === "interpreter" &&
+    (pathname === "/app/interpreter" ||
+      pathname.startsWith("/app/interpreter/"))
+  ) {
+    const { data: application, error: applicationError } = await supabase
+      .from("interpreter_applications")
+      .select("status")
+      .eq("profile_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!applicationError) {
+      const interpreterRedirect = resolveInterpreterRedirect(
+        pathname,
+        application?.status ?? null,
+      );
+
+      if (interpreterRedirect) {
+        return redirectWithCookies(
+          response,
+          new URL(interpreterRedirect, request.url),
+        );
+      }
+    }
   }
 
   return response;
