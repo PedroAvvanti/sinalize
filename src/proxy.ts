@@ -1,16 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import {
-  isProfileRecoveryRequest,
-  profileUnavailableLoginPath,
-} from "@/lib/auth/policy";
-import { homePathForRole, type ProfileRole } from "@/lib/auth/roles";
+import { decideProfileAccess } from "@/lib/auth/policy";
 import type { Database } from "@/types/database";
-
-function isProfileRole(role: unknown): role is ProfileRole {
-  return role === "user" || role === "interpreter" || role === "admin";
-}
 
 function redirectWithCookies(
   response: NextResponse,
@@ -69,32 +61,29 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (
-    isProfileRecoveryRequest(
-      pathname,
-      request.nextUrl.searchParams.get("error"),
-    )
-  ) {
-    await supabase.auth.signOut();
-    return response;
-  }
-
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", userId)
-    .single();
-  const role = profile?.role;
+    .maybeSingle();
+  const profileAccess = decideProfileAccess(
+    profile?.role,
+    Boolean(profileError),
+  );
 
-  if (!isProfileRole(role)) {
+  if (profileAccess.kind === "indeterminate") {
+    return response;
+  }
+
+  if (profileAccess.signOut) {
     await supabase.auth.signOut();
     return redirectWithCookies(
       response,
-      new URL(profileUnavailableLoginPath(), request.url),
+      new URL(profileAccess.destination, request.url),
     );
   }
 
-  const homePath = homePathForRole(role);
+  const { destination: homePath, role } = profileAccess;
 
   if (pathname === "/login" || pathname === "/signup" || pathname === "/app") {
     return redirectWithCookies(

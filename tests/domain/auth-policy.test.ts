@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   authMessageFor,
-  isProfileRecoveryRequest,
+  decideProfileAccess,
   loginMessageForError,
   profileUnavailableLoginPath,
   resolvePostLoginPath,
@@ -87,12 +87,37 @@ describe("mensagens públicas de autenticação", () => {
       "Sua sessão foi encerrada. Entre novamente ou crie uma conta para continuar.",
     );
     expect(loginMessageForError("erro-arbitrario")).toBeNull();
-    expect(
-      isProfileRecoveryRequest("/login", "profile_unavailable"),
-    ).toBe(true);
-    expect(isProfileRecoveryRequest("/login", "erro-arbitrario")).toBe(false);
-    expect(
-      isProfileRecoveryRequest("/app/user", "profile_unavailable"),
-    ).toBe(false);
+  });
+});
+
+describe("decideProfileAccess", () => {
+  it("preserva a sessão e direciona à home quando o perfil existe", () => {
+    expect(decideProfileAccess("user")).toEqual({
+      kind: "authenticated",
+      role: "user",
+      destination: "/app/user",
+      signOut: false,
+    });
+  });
+
+  it("recupera e encerra a sessão somente sem perfil válido", () => {
+    expect(decideProfileAccess(null)).toEqual({
+      kind: "recover",
+      destination: "/login?error=profile_unavailable",
+      signOut: true,
+    });
+    expect(decideProfileAccess("owner")).toEqual({
+      kind: "recover",
+      destination: "/login?error=profile_unavailable",
+      signOut: true,
+    });
+  });
+
+  it("preserva a sessão quando a consulta do perfil é inconclusiva", () => {
+    expect(decideProfileAccess(null, true)).toEqual({
+      kind: "indeterminate",
+      destination: null,
+      signOut: false,
+    });
   });
 });

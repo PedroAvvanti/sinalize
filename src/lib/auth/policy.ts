@@ -17,6 +17,10 @@ const AUTH_MESSAGES: Record<AuthMessageCode, string> = {
 
 const PROFILE_UNAVAILABLE_ERROR = "profile_unavailable";
 
+function isProfileRole(role: unknown): role is ProfileRole {
+  return role === "user" || role === "interpreter" || role === "admin";
+}
+
 export function authMessageFor(code: AuthMessageCode): string {
   return AUTH_MESSAGES[code];
 }
@@ -74,11 +78,36 @@ export function profileUnavailableLoginPath(): string {
   return `/login?error=${PROFILE_UNAVAILABLE_ERROR}`;
 }
 
-export function isProfileRecoveryRequest(
-  pathname: string,
-  error: string | null,
-): boolean {
-  return pathname === "/login" && error === PROFILE_UNAVAILABLE_ERROR;
+export function decideProfileAccess(
+  role: unknown,
+  lookupFailed = false,
+):
+  | {
+      kind: "authenticated";
+      role: ProfileRole;
+      destination: string;
+      signOut: false;
+    }
+  | { kind: "indeterminate"; destination: null; signOut: false }
+  | { kind: "recover"; destination: string; signOut: true } {
+  if (lookupFailed) {
+    return { kind: "indeterminate", destination: null, signOut: false };
+  }
+
+  if (isProfileRole(role)) {
+    return {
+      kind: "authenticated",
+      role,
+      destination: homePathForRole(role),
+      signOut: false,
+    };
+  }
+
+  return {
+    kind: "recover",
+    destination: profileUnavailableLoginPath(),
+    signOut: true,
+  };
 }
 
 export function loginMessageForError(
