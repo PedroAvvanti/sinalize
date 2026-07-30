@@ -2,6 +2,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/actions/auth";
+import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({
@@ -24,7 +25,7 @@ export default async function AppLayout({
     .single();
 
   if (!profile) {
-    redirect("/login");
+    redirect(profileUnavailableLoginPath());
   }
 
   return (

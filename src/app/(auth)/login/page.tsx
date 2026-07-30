@@ -1,9 +1,22 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { loginMessageForError } from "@/lib/auth/policy";
+
 import { LoginForm } from "./login-form";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    error?: string | string[];
+    next?: string | string[];
+  }>;
+}) {
+  const params = await searchParams;
+  const message = loginMessageForError(params.error);
+  const nextPath = typeof params.next === "string" ? params.next : undefined;
+
   return (
     <main className="auth-shell">
       <section className="auth-card" aria-labelledby="login-title">
@@ -20,7 +33,13 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <LoginForm />
+        {message ? (
+          <p className="auth-error" role="alert">
+            {message}
+          </p>
+        ) : null}
+
+        <LoginForm nextPath={nextPath} />
 
         <p className="auth-switch">
           Ainda não tem conta? <Link href="/signup">Cadastre-se</Link>

@@ -1,6 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import {
+  isProfileRecoveryRequest,
+  profileUnavailableLoginPath,
+} from "@/lib/auth/policy";
 import { homePathForRole, type ProfileRole } from "@/lib/auth/roles";
 import type { Database } from "@/types/database";
 
@@ -65,6 +69,16 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
+  if (
+    isProfileRecoveryRequest(
+      pathname,
+      request.nextUrl.searchParams.get("error"),
+    )
+  ) {
+    await supabase.auth.signOut();
+    return response;
+  }
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
@@ -73,16 +87,11 @@ export async function proxy(request: NextRequest) {
   const role = profile?.role;
 
   if (!isProfileRole(role)) {
-    if (isAppPath(pathname)) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set(
-        "error",
-        "Não foi possível carregar o perfil da conta.",
-      );
-      return redirectWithCookies(response, loginUrl);
-    }
-
-    return response;
+    await supabase.auth.signOut();
+    return redirectWithCookies(
+      response,
+      new URL(profileUnavailableLoginPath(), request.url),
+    );
   }
 
   const homePath = homePathForRole(role);

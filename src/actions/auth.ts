@@ -2,6 +2,11 @@
 
 import { redirect } from "next/navigation";
 
+import {
+  authMessageFor,
+  resolvePostLoginPath,
+  validateSignupEligibility,
+} from "@/lib/auth/policy";
 import { homePathForRole, type ProfileRole } from "@/lib/auth/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -12,10 +17,6 @@ export type AuthActionState = {
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
-}
-
-function isPublicRole(role: string): role is Exclude<ProfileRole, "admin"> {
-  return role === "user" || role === "interpreter";
 }
 
 async function mirrorRoleInAppMetadata(userId: string, role: ProfileRole) {
@@ -44,16 +45,15 @@ export async function signUpAction(
   const fullName = value(formData, "full_name");
   const email = value(formData, "email");
   const password = value(formData, "password");
-  const role = value(formData, "role");
+  const requestedRole = value(formData, "role");
   const adult = formData.get("is_adult") === "on";
+  const eligibility = validateSignupEligibility(requestedRole, adult);
 
-  if (!adult) {
-    return { error: "É preciso ter 18 anos ou mais." };
+  if (!eligibility.ok) {
+    return { error: eligibility.error };
   }
 
-  if (!isPublicRole(role)) {
-    return { error: "Escolha um tipo de conta válido." };
-  }
+  const { role } = eligibility;
 
   if (!fullName || !email || !password) {
     return { error: "Preencha nome, e-mail e senha." };
@@ -76,7 +76,11 @@ export async function signUpAction(
   });
 
   if (error) {
-    return { error: error.message };
+    console.error("Falha no cadastro pelo provedor de autenticação.", {
+      code: error.code,
+      status: error.status,
+    });
+    return { error: authMessageFor("signup_failed") };
   }
 
   // Em confirmação de e-mail, cadastro repetido pode devolver um usuário
@@ -98,6 +102,7 @@ export async function signInAction(
 ): Promise<AuthActionState> {
   const email = value(formData, "email");
   const password = value(formData, "password");
+  const nextPath = value(formData, "next");
 
   if (!email || !password) {
     return { error: "Informe e-mail e senha." };
@@ -121,10 +126,10 @@ export async function signInAction(
 
   if (profileError || !profile) {
     await supabase.auth.signOut();
-    return { error: "Não foi possível carregar o perfil da conta." };
+    return { error: authMessageFor("profile_unavailable") };
   }
 
-  redirect(homePathForRole(profile.role));
+  redirect(resolvePostLoginPath(nextPath, profile.role));
 }
 
 export async function signOutAction() {

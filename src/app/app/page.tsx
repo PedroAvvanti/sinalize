@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { homePathForRole } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,7 +20,7 @@ export default async function AppPage() {
     .single();
 
   if (!profile) {
-    redirect("/login");
+    redirect(profileUnavailableLoginPath());
   }
 
   redirect(homePathForRole(profile.role));
