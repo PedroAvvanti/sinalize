@@ -72,7 +72,28 @@ create table public.interpreter_applications (
   reviewed_by uuid references public.profiles (id),
   reviewed_at timestamptz,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint interpreter_applications_review_state_check
+    check (
+      (
+        status = 'pending'
+        and rejection_reason is null
+        and reviewed_by is null
+        and reviewed_at is null
+      )
+      or (
+        status = 'approved'
+        and rejection_reason is null
+        and reviewed_by is not null
+        and reviewed_at is not null
+      )
+      or (
+        status = 'rejected'
+        and nullif(btrim(rejection_reason), '') is not null
+        and reviewed_by is not null
+        and reviewed_at is not null
+      )
+    )
 );
 
 create index interpreter_applications_profile_id_idx
@@ -95,10 +116,13 @@ create table public.appointments (
   updated_at timestamptz not null default now(),
   constraint appointments_duration_minutes_check
     check (duration_minutes in (15, 30, 60)),
-  constraint appointments_interpreter_when_accepted
+  constraint appointments_room_name_not_blank
+    check (nullif(btrim(jitsi_room_name), '') is not null),
+  constraint appointments_interpreter_state_check
     check (
-      (status = 'open' and interpreter_id is null)
-      or (status <> 'open')
+      (status in ('open', 'expired') and interpreter_id is null)
+      or (status in ('accepted', 'cancel_requested', 'completed') and interpreter_id is not null)
+      or status = 'cancelled'
     )
 );
 
@@ -119,7 +143,21 @@ create table public.cancellation_requests (
   reviewed_by uuid references public.profiles (id),
   reviewed_at timestamptz,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint cancellation_requests_review_state_check
+    check (
+      (
+        status = 'pending'
+        and admin_decision_note is null
+        and reviewed_by is null
+        and reviewed_at is null
+      )
+      or (
+        status in ('approved', 'rejected')
+        and reviewed_by is not null
+        and reviewed_at is not null
+      )
+    )
 );
 
 create index cancellation_requests_appointment_id_idx
@@ -211,6 +249,22 @@ as $$
   );
 $$;
 
+create or replace function private.list_public_profiles()
+returns table (
+  id uuid,
+  full_name text,
+  role public.profile_role,
+  average_rating numeric
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select p.id, p.full_name, p.role, p.average_rating
+  from public.profiles p;
+$$;
+
 create or replace function private.protect_profile_fields()
 returns trigger
 language plpgsql
@@ -228,6 +282,144 @@ begin
 
   new.role := old.role;
   new.average_rating := old.average_rating;
+  return new;
+end;
+$$;
+
+create or replace function private.guard_interpreter_application()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if tg_op = 'UPDATE' then
+    if new.id is distinct from old.id
+       or new.profile_id is distinct from old.profile_id
+       or new.created_at is distinct from old.created_at then
+      raise exception 'application identity fields are immutable';
+    end if;
+
+    if not private.is_admin()
+       and (
+         new.status is distinct from old.status
+         or new.rejection_reason is distinct from old.rejection_reason
+         or new.reviewed_by is distinct from old.reviewed_by
+         or new.reviewed_at is distinct from old.reviewed_at
+       ) then
+      raise exception 'only admins can review applications';
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function private.prepare_cancellation_request()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_role text;
+begin
+  if tg_op = 'INSERT' then
+    v_role := private.current_role();
+
+    if auth.uid() is null
+       or coalesce(v_role not in ('user', 'interpreter'), true) then
+      raise exception 'only participants can request cancellation';
+    end if;
+
+    new.requested_by := auth.uid();
+    new.requested_by_role := v_role::public.cancellation_requester_role;
+    new.status := 'pending';
+    new.admin_decision_note := null;
+    new.reviewed_by := null;
+    new.reviewed_at := null;
+    return new;
+  end if;
+
+  if new.id is distinct from old.id
+     or new.appointment_id is distinct from old.appointment_id
+     or new.requested_by is distinct from old.requested_by
+     or new.requested_by_role is distinct from old.requested_by_role
+     or new.reason_code is distinct from old.reason_code
+     or new.reason_text is distinct from old.reason_text
+     or new.created_at is distinct from old.created_at then
+    raise exception 'cancellation request fields are immutable';
+  end if;
+
+  if not private.is_admin() then
+    raise exception 'only admins can decide cancellation requests';
+  end if;
+
+  if new.status = 'pending' then
+    new.admin_decision_note := null;
+    new.reviewed_by := null;
+    new.reviewed_at := null;
+  else
+    new.reviewed_by := auth.uid();
+    new.reviewed_at := now();
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function private.guard_appointment_update()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.id is distinct from old.id
+     or new.requester_id is distinct from old.requester_id
+     or new.scheduled_at is distinct from old.scheduled_at
+     or new.duration_minutes is distinct from old.duration_minutes
+     or new.reason_code is distinct from old.reason_code
+     or new.reason_text is distinct from old.reason_text
+     or new.jitsi_room_name is distinct from old.jitsi_room_name
+     or new.created_at is distinct from old.created_at then
+    raise exception 'appointment request fields are immutable';
+  end if;
+
+  if new.status = old.status
+     and new.interpreter_id is not distinct from old.interpreter_id then
+    return new;
+  end if;
+
+  if not (
+    (old.status = 'open' and new.status in ('accepted', 'cancelled', 'expired'))
+    or (old.status = 'accepted' and new.status in ('cancel_requested', 'cancelled', 'completed'))
+    or (
+      old.status = 'cancel_requested'
+      and new.status in ('open', 'accepted', 'cancelled')
+    )
+  ) then
+    raise exception 'invalid appointment status transition: % -> %', old.status, new.status;
+  end if;
+
+  if new.status = 'open' and new.interpreter_id is not null then
+    raise exception 'open appointments cannot have an interpreter';
+  end if;
+
+  if old.status = 'cancel_requested'
+     and new.status = 'open'
+     and new.interpreter_id is not null then
+    raise exception 'reopened appointments must clear the interpreter';
+  end if;
+
+  if new.interpreter_id is distinct from old.interpreter_id
+     and not (
+       (old.status = 'open' and new.status = 'accepted')
+       or (old.status = 'cancel_requested' and new.status = 'open')
+     ) then
+    raise exception 'interpreter can only change on acceptance or reopening';
+  end if;
+
   return new;
 end;
 $$;
@@ -304,11 +496,32 @@ as $$
   select private.accept_appointment(p_appointment_id);
 $$;
 
-create or replace function public.handle_new_user()
+create or replace function public.list_public_profiles()
+returns table (
+  id uuid,
+  full_name text,
+  role public.profile_role,
+  average_rating numeric
+)
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  select * from private.list_public_profiles();
+$$;
+
+create or replace view public.public_profiles
+with (security_invoker = true)
+as
+  select id, full_name, role, average_rating
+  from public.list_public_profiles();
+
+create or replace function private.handle_new_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 begin
   insert into public.profiles (id, full_name, role, theme_preference)
@@ -327,7 +540,7 @@ $$;
 
 create trigger on_auth_user_created
   after insert on auth.users
-  for each row execute function public.handle_new_user();
+  for each row execute function private.handle_new_user();
 
 -- ---------------------------------------------------------------------------
 -- Triggers
@@ -345,13 +558,25 @@ create trigger interpreter_applications_set_updated_at
   before update on public.interpreter_applications
   for each row execute function private.set_updated_at();
 
+create trigger interpreter_applications_guard
+  before insert or update on public.interpreter_applications
+  for each row execute function private.guard_interpreter_application();
+
 create trigger appointments_set_updated_at
   before update on public.appointments
   for each row execute function private.set_updated_at();
 
+create trigger appointments_guard_update
+  before update on public.appointments
+  for each row execute function private.guard_appointment_update();
+
 create trigger cancellation_requests_set_updated_at
   before update on public.cancellation_requests
   for each row execute function private.set_updated_at();
+
+create trigger cancellation_requests_prepare
+  before insert or update on public.cancellation_requests
+  for each row execute function private.prepare_cancellation_request();
 
 create trigger reviews_refresh_average_rating
   after insert on public.reviews
@@ -368,12 +593,12 @@ alter table public.cancellation_requests enable row level security;
 alter table public.reviews enable row level security;
 alter table public.notifications enable row level security;
 
--- profiles: autenticados leem (average_rating público via perfil); dono/admin escrevem
-create policy profiles_select_authenticated
+-- profiles: tabela base somente para dono/admin; projeção pública pela view
+create policy profiles_select_own_or_admin
   on public.profiles
   for select
   to authenticated
-  using (true);
+  using (id = auth.uid() or private.is_admin());
 
 create policy profiles_update_own
   on public.profiles
@@ -396,6 +621,10 @@ create policy interpreter_applications_insert_own
   with check (
     profile_id = auth.uid()
     and private.current_role() = 'interpreter'
+    and status = 'pending'
+    and rejection_reason is null
+    and reviewed_by is null
+    and reviewed_at is null
   );
 
 create policy interpreter_applications_update
@@ -424,22 +653,16 @@ create policy appointments_insert_requester
   with check (
     requester_id = auth.uid()
     and private.current_role() = 'user'
+    and status = 'open'
+    and interpreter_id is null
   );
 
-create policy appointments_update_participants_or_admin
+create policy appointments_update_admin
   on public.appointments
   for update
   to authenticated
-  using (
-    private.is_admin()
-    or requester_id = auth.uid()
-    or interpreter_id = auth.uid()
-  )
-  with check (
-    private.is_admin()
-    or requester_id = auth.uid()
-    or interpreter_id = auth.uid()
-  );
+  using (private.is_admin())
+  with check (private.is_admin());
 
 -- cancellation_requests
 create policy cancellation_requests_select
@@ -463,6 +686,11 @@ create policy cancellation_requests_insert
   to authenticated
   with check (
     requested_by = auth.uid()
+    and requested_by_role = private.current_role()::public.cancellation_requester_role
+    and status = 'pending'
+    and admin_decision_note is null
+    and reviewed_by is null
+    and reviewed_at is null
     and exists (
       select 1
       from public.appointments a
@@ -540,7 +768,11 @@ values (
   10485760,
   array['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
 )
-on conflict (id) do nothing;
+on conflict (id) do update
+set name = excluded.name,
+    public = false,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
 
 create policy certificates_select_own_or_admin
   on storage.objects
@@ -602,6 +834,7 @@ create policy certificates_delete_own_or_admin
 grant usage on schema public to anon, authenticated, service_role;
 
 grant select, update on table public.profiles to authenticated;
+grant select on table public.public_profiles to authenticated;
 grant select, insert, update on table public.interpreter_applications to authenticated;
 grant select, insert, update on table public.appointments to authenticated;
 grant select, insert, update on table public.cancellation_requests to authenticated;
@@ -614,8 +847,12 @@ grant all on all sequences in schema public to service_role;
 grant execute on function private.current_role() to authenticated, service_role;
 grant execute on function private.is_admin() to authenticated, service_role;
 grant execute on function private.is_approved_interpreter() to authenticated, service_role;
+grant execute on function private.list_public_profiles() to authenticated, service_role;
 grant execute on function private.accept_appointment(uuid) to authenticated, service_role;
+revoke all on function public.accept_appointment(uuid) from public, anon;
 grant execute on function public.accept_appointment(uuid) to authenticated, service_role;
+revoke all on function public.list_public_profiles() from public, anon;
+grant execute on function public.list_public_profiles() to authenticated, service_role;
 
-revoke all on function public.handle_new_user() from public, anon, authenticated;
-grant execute on function public.handle_new_user() to supabase_auth_admin;
+revoke all on function private.handle_new_user() from public, anon, authenticated;
+grant execute on function private.handle_new_user() to supabase_auth_admin;

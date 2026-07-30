@@ -252,11 +252,25 @@ export type Database = {
         Relationships: [];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      public_profiles: {
+        Row: {
+          id: string | null;
+          full_name: string | null;
+          role: ProfileRole | null;
+          average_rating: number | null;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       accept_appointment: {
         Args: { p_appointment_id: string };
         Returns: Database["public"]["Tables"]["appointments"]["Row"];
+      };
+      list_public_profiles: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database["public"]["Views"]["public_profiles"]["Row"][];
       };
     };
     Enums: {
