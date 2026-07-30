@@ -33,10 +33,10 @@ export default function Home() {
           </p>
 
           <div className="actions" aria-label="Acesso à plataforma">
-            <a className="button button-primary" href="/cadastro">
+            <a className="button button-primary" href="/signup">
               Criar conta
             </a>
-            <a className="button button-secondary" href="/entrar">
+            <a className="button button-secondary" href="/login">
               Entrar
             </a>
           </div>
