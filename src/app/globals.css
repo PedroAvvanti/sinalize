@@ -48,6 +48,69 @@ a {
   text-decoration: none;
 }
 
+.skip-link {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
+  transform: translateY(-160%);
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-primary-ink);
+  font-weight: 750;
+  padding: 10px 16px;
+  transition: transform 160ms ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 3px solid var(--color-accent-soft);
+  outline-offset: 4px;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--color-accent-soft);
+  outline-offset: 3px;
+}
+
+.feedback-error,
+.auth-error,
+.user-dashboard-error,
+.theme-toggle-error {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.feedback-error::before,
+.auth-error::before,
+.user-dashboard-error::before,
+.theme-toggle-error::before {
+  content: "⚠";
+  flex: 0 0 auto;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.appointment-form-success,
+.review-feedback-success {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.appointment-form-success::before,
+.review-feedback-success::before {
+  content: "✓";
+  flex: 0 0 auto;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
 .landing {
   position: relative;
   display: grid;
@@ -2130,6 +2193,11 @@ footer span {
   white-space: nowrap;
 }
 
+.complete-meeting__button:focus-visible {
+  outline: 3px solid var(--color-accent-soft);
+  outline-offset: 3px;
+}
+
 .review-page {
   display: grid;
   gap: 20px;
@@ -2189,6 +2257,11 @@ footer span {
   border-color: var(--color-primary);
   background: color-mix(in srgb, var(--color-accent-soft) 18%, transparent);
   color: var(--color-primary);
+}
+
+.review-form__star:focus-within {
+  outline: 3px solid var(--color-accent-soft);
+  outline-offset: 3px;
 }
 
 .review-form__star input {

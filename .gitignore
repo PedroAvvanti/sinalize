@@ -25,3 +25,9 @@ yarn-error.log*
 
 # generated
 next-env.d.ts
+
+# PWA (gerado no build)
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/swe-worker-*.js
