@@ -52,7 +52,10 @@ export default async function AdminInterpretersPage() {
     );
   }
 
-  const profileIds = [...new Set(applications.map(({ profile_id }) => profile_id))];
+  const pendingApplications = applications ?? [];
+  const profileIds = [
+    ...new Set(pendingApplications.map(({ profile_id }) => profile_id)),
+  ];
   const { data: interpreterProfiles, error: interpreterProfilesError } =
     profileIds.length > 0
       ? await supabase
@@ -80,16 +83,23 @@ export default async function AdminInterpretersPage() {
   }
 
   const namesByProfileId = new Map(
-    interpreterProfiles.map(({ id, full_name }) => [id, full_name]),
+    (interpreterProfiles ?? []).map(({ id, full_name }) => [id, full_name]),
   );
   const reviewItems = await Promise.all(
-    applications.map(async (application) => {
-      const { data } = await supabase.storage
+    pendingApplications.map(async (application) => {
+      const { data, error: signedUrlError } = await supabase.storage
         .from("certificates")
         .createSignedUrl(
           application.certificate_path,
           SIGNED_CERTIFICATE_TTL_SECONDS,
         );
+
+      if (signedUrlError) {
+        console.error("Não foi possível gerar URL assinada do certificado.", {
+          code: signedUrlError.message,
+          applicationId: application.id,
+        });
+      }
 
       return {
         id: application.id,
@@ -114,7 +124,7 @@ export default async function AdminInterpretersPage() {
         </div>
         <p
           className="pending-count"
-          aria-label={`${reviewItems.length} pendentes`}
+          aria-label={`${reviewItems.length} ${reviewItems.length === 1 ? "pendente" : "pendentes"}`}
         >
           <strong>{reviewItems.length}</strong>
           <span>{reviewItems.length === 1 ? "pendente" : "pendentes"}</span>

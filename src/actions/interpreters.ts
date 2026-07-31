@@ -114,7 +114,7 @@ export async function reviewInterpreterApplication({
     .insert(notification);
 
   if (notificationError) {
-    const { error: rollbackError } = await supabase
+    const { data: rolledBack, error: rollbackError } = await supabase
       .from("interpreter_applications")
       .update({
         status: "pending",
@@ -125,15 +125,20 @@ export async function reviewInterpreterApplication({
       .eq("id", id)
       .eq("status", decision)
       .eq("reviewed_by", adminId)
-      .eq("reviewed_at", reviewedAt);
+      .eq("reviewed_at", reviewedAt)
+      .select("id")
+      .maybeSingle();
+
+    const rollbackFailed = Boolean(rollbackError) || !rolledBack;
 
     console.error("Não foi possível notificar o intérprete após a revisão.", {
       code: notificationError.code,
       rollbackCode: rollbackError?.code,
+      rollbackMatched: Boolean(rolledBack),
       applicationId: id,
     });
     return {
-      error: rollbackError
+      error: rollbackFailed
         ? "A decisão foi registrada, mas a notificação falhou. Recarregue a fila."
         : "A decisão não foi salva porque a notificação falhou. Tente novamente.",
     };

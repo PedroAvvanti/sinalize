@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useId, useState, useTransition } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 
 import { reviewInterpreterApplication } from "@/actions/interpreters";
 
@@ -20,13 +20,21 @@ export function InterpreterReviewCard({
   const router = useRouter();
   const reasonId = useId();
   const reasonHintId = useId();
+  const reviewLockRef = useRef(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<"success" | "error" | null>(null);
   const [reviewed, setReviewed] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function review(decision: "approved" | "rejected") {
+    if (isPending || reviewed || reviewLockRef.current) {
+      return;
+    }
+
+    reviewLockRef.current = true;
     setMessage(null);
+    setStatus(null);
     startTransition(async () => {
       const result = await reviewInterpreterApplication({
         id: application.id,
@@ -35,11 +43,14 @@ export function InterpreterReviewCard({
       });
 
       if (result.error) {
+        reviewLockRef.current = false;
+        setStatus("error");
         setMessage(result.error);
         return;
       }
 
       setReviewed(true);
+      setStatus("success");
       setMessage(
         decision === "approved"
           ? "Candidatura aprovada."
@@ -104,10 +115,10 @@ export function InterpreterReviewCard({
           <span id={reasonHintId}>Obrigatório somente ao rejeitar.</span>
         </div>
 
-        {message ? (
+        {message && status ? (
           <p
             className={
-              message.endsWith("aprovada.") || message.endsWith("rejeitada.")
+              status === "success"
                 ? "review-feedback review-feedback-success"
                 : "review-feedback review-feedback-error"
             }
