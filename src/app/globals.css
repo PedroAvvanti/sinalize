@@ -2061,3 +2061,61 @@ footer span {
 .notifications-empty p {
   color: var(--color-muted);
 }
+
+.meeting-page {
+  display: grid;
+  gap: 20px;
+}
+
+.meeting-page-live {
+  min-height: calc(100vh - 120px);
+  grid-template-rows: auto 1fr;
+}
+
+.meeting-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.meeting-lead {
+  margin: 0;
+  max-width: 620px;
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.jitsi-meeting-frame,
+.meeting-error {
+  min-height: min(72vh, 760px);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 16%, transparent);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0b1220;
+}
+
+.meeting-error {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  padding: 24px;
+  color: #fff;
+  text-align: center;
+}
+
+.meeting-error p {
+  margin: 0;
+}
+
+@media (max-width: 680px) {
+  .meeting-page__header {
+    flex-direction: column;
+  }
+
+  .jitsi-meeting-frame,
+  .meeting-error {
+    min-height: 62vh;
+  }
+}

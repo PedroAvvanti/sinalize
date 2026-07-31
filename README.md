@@ -26,13 +26,22 @@ A videochamada usa o Jitsi Meet público (`meet.jit.si`) embutido no app — **g
 
 3. Preencha `.env.local` com as credenciais do seu projeto Supabase. O domínio Jitsi padrão é `meet.jit.si` (opcional: `NEXT_PUBLIC_JITSI_DOMAIN`).
 
-4. Inicie o ambiente de desenvolvimento:
+4. Aplique as migrations em `supabase/migrations/` no SQL Editor do Supabase (ou via CLI), na ordem dos arquivos.
+
+5. Inicie o ambiente de desenvolvimento:
 
    ```bash
    npm run dev
    ```
 
 5. Acesse [http://localhost:3000](http://localhost:3000).
+
+## Videochamada (Jitsi Meet)
+
+- Gratuita, embutida no app via `meet.jit.si` (External API).
+- Não exige conta JaaS nem chaves secretas de vídeo.
+- A rota `/app/meeting/[appointmentId]` só abre para participantes do atendimento, dentro da janela de horário (10 min antes até o fim da duração).
+- Gravação desabilitada no embed.
 
 ## Promover uma conta a administrador
 

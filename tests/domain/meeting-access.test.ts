@@ -5,6 +5,7 @@ import {
   isWithinMeetingWindow,
   MEETING_EARLY_ACCESS_MINUTES,
 } from "../../src/lib/domain/meeting-access";
+import { canEnterMeeting } from "../../src/lib/jitsi/meeting-access";
 
 describe("meeting access", () => {
   it("allows entry ten minutes before start until duration ends", () => {
@@ -25,5 +26,67 @@ describe("meeting access", () => {
 
     expect(isUpcomingAppointment(scheduled, 60, beforeEnd)).toBe(true);
     expect(isUpcomingAppointment(scheduled, 60, afterEnd)).toBe(false);
+  });
+});
+
+describe("canEnterMeeting", () => {
+  const scheduled = new Date("2026-08-10T18:00:00.000Z");
+  const during = new Date("2026-08-10T18:15:00.000Z");
+
+  const baseAppointment = {
+    requesterId: "user-1",
+    interpreterId: "interp-1",
+    status: "accepted" as const,
+    scheduledAt: scheduled,
+    durationMinutes: 60,
+  };
+
+  it("allows participants inside the meeting window", () => {
+    expect(
+      canEnterMeeting({
+        appointment: baseAppointment,
+        userId: "user-1",
+        now: during,
+      }),
+    ).toEqual({ ok: true });
+  });
+
+  it("blocks non-participants", () => {
+    expect(
+      canEnterMeeting({
+        appointment: baseAppointment,
+        userId: "other-user",
+        now: during,
+      }),
+    ).toEqual({
+      ok: false,
+      reason: "Você não participa deste atendimento.",
+    });
+  });
+
+  it("blocks open appointments", () => {
+    expect(
+      canEnterMeeting({
+        appointment: { ...baseAppointment, status: "open" },
+        userId: "user-1",
+        now: during,
+      }),
+    ).toEqual({
+      ok: false,
+      reason: "Este atendimento ainda não está disponível para videochamada.",
+    });
+  });
+
+  it("blocks outside the meeting window", () => {
+    expect(
+      canEnterMeeting({
+        appointment: baseAppointment,
+        userId: "user-1",
+        now: new Date("2026-08-10T12:00:00.000Z"),
+      }),
+    ).toEqual({
+      ok: false,
+      reason: `A sala abre ${MEETING_EARLY_ACCESS_MINUTES} minutos antes do horário agendado e encerra ao fim da duração.`,
+    });
   });
 });
