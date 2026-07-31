@@ -5,7 +5,11 @@ export default function ConfirmPage() {
   return (
     <main className="auth-shell">
       <section className="auth-card auth-card-compact" aria-labelledby="confirm-title">
-        <Image src="/logo.png" alt="" width={72} height={72} priority />
+        <Link className="auth-brand" href="/" aria-label="Voltar ao início">
+          <Image src="/logo.png" alt="" width={80} height={80} priority />
+          <span>Sinalize</span>
+        </Link>
+
         <div>
           <p className="auth-eyebrow">Cadastro recebido</p>
           <h1 id="confirm-title">Confira seu e-mail</h1>

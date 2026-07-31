@@ -13,8 +13,8 @@ export default function Home() {
         <Image
           src="/logo.png"
           alt=""
-          width={56}
-          height={56}
+          width={80}
+          height={80}
           priority
         />
         <span>Sinalize</span>

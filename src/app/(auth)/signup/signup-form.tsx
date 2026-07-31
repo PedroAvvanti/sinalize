@@ -60,23 +60,23 @@ export function SignupForm() {
 
       <fieldset className="auth-role-group">
         <legend>Tipo de conta</legend>
-        <label>
+        <label className="auth-choice">
           <input type="radio" name="role" value="user" defaultChecked />
-          Quero solicitar intérpretes
+          <span className="auth-choice-text">Quero solicitar intérpretes</span>
         </label>
-        <label>
+        <label className="auth-choice">
           <input type="radio" name="role" value="interpreter" />
-          Sou intérprete de Libras
+          <span className="auth-choice-text">Sou intérprete de Libras</span>
         </label>
       </fieldset>
 
-      <label className="auth-checkbox">
+      <label className="auth-checkbox auth-choice">
         <input type="checkbox" name="is_adult" required />
-        <span>Tenho 18 anos ou mais</span>
+        <span className="auth-choice-text">Tenho 18 anos ou mais</span>
       </label>
 
       {state.error ? (
-        <p className="auth-error" role="alert" aria-live="polite">
+        <p className="auth-error auth-error-ios" role="alert" aria-live="polite">
           {state.error}
         </p>
       ) : null}

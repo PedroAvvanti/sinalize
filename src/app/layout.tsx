@@ -1,6 +1,19 @@
 import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
 
 import "./globals.css";
+
+const sourceSerif = Source_Serif_4({
+  subsets: ["latin"],
+  variable: "--font-accent",
+  weight: ["400", "600"],
+});
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-ui",
+  weight: ["500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: "Sinalize",
@@ -35,7 +48,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html data-theme="light" lang="pt-BR" suppressHydrationWarning>
+    <html
+      data-theme="light"
+      lang="pt-BR"
+      className={`${sourceSerif.variable} ${plusJakarta.variable}`}
+      suppressHydrationWarning
+    >
       <body>
         <a className="skip-link" href="#main-content">
           Ir para o conteúdo principal

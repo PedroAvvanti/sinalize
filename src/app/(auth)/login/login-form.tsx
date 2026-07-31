@@ -47,7 +47,7 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
       </div>
 
       {state.error ? (
-        <p className="auth-error" role="alert" aria-live="polite">
+        <p className="auth-error auth-error-ios" role="alert" aria-live="polite">
           {state.error}
         </p>
       ) : null}
