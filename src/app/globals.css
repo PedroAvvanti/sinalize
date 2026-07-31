@@ -2119,3 +2119,95 @@ footer span {
     min-height: 62vh;
   }
 }
+
+.complete-meeting {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.complete-meeting__button {
+  white-space: nowrap;
+}
+
+.review-page {
+  display: grid;
+  gap: 20px;
+  max-width: 640px;
+}
+
+.review-page__header {
+  display: grid;
+  gap: 8px;
+}
+
+.review-page__lead {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.review-form {
+  display: grid;
+  gap: 16px;
+}
+
+.review-form__lead {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.review-form__rating {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.review-form__rating legend {
+  margin-bottom: 10px;
+  font-weight: 750;
+}
+
+.review-form__stars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.review-form__star {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid color-mix(in srgb, var(--color-muted) 24%, transparent);
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.review-form__star:has(input:checked) {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-accent-soft) 18%, transparent);
+  color: var(--color-primary);
+}
+
+.review-form__star input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.review-form-success {
+  display: grid;
+  gap: 12px;
+}
+
+.review-form-success h2 {
+  margin: 0;
+}
+
+.review-form-success p {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.6;
+}

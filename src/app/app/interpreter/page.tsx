@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { expireStaleAppointments } from "@/actions/appointments";
 import { OpenRequestsList } from "@/components/appointments/OpenRequestsList";
 import { createClient } from "@/lib/supabase/server";
 
@@ -35,6 +36,8 @@ export default async function InterpreterHomePage() {
   ) {
     redirect("/app/interpreter/onboarding");
   }
+
+  await expireStaleAppointments();
 
   const { data: appointments, error: appointmentsError } = await supabase
     .from("appointments")

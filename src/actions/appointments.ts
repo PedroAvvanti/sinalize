@@ -10,6 +10,7 @@ import {
   type AppointmentDuration,
 } from "@/lib/domain/appointments";
 import { isAppointmentReasonCode } from "@/lib/domain/reasons";
+import { appointmentEndsAt } from "@/lib/domain/meeting-access";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -197,4 +198,163 @@ export async function acceptAppointmentAction(
   revalidatePath("/app/user");
   revalidatePath("/app/notifications");
   return { ok: true };
+}
+
+export type CompleteAppointmentResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function completeAppointmentAction(
+  appointmentId: string,
+): Promise<CompleteAppointmentResult> {
+  if (!appointmentId) {
+    return { ok: false, error: "Atendimento inválido." };
+  }
+
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims.sub;
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "Sua sessão expirou. Entre novamente para encerrar a chamada.",
+    };
+  }
+
+  const { data: appointment, error: appointmentError } = await supabase
+    .from("appointments")
+    .select("id, status, requester_id, interpreter_id")
+    .eq("id", appointmentId)
+    .maybeSingle();
+
+  if (appointmentError || !appointment) {
+    return { ok: false, error: "Atendimento não encontrado." };
+  }
+
+  const isParticipant =
+    appointment.requester_id === userId ||
+    appointment.interpreter_id === userId;
+
+  if (!isParticipant) {
+    return { ok: false, error: "Você não participa deste atendimento." };
+  }
+
+  if (appointment.status !== "accepted") {
+    return {
+      ok: false,
+      error: "Este atendimento não pode ser encerrado agora.",
+    };
+  }
+
+  try {
+    const admin = createAdminClient();
+    const { data: updated, error: updateError } = await admin
+      .from("appointments")
+      .update({ status: "completed" })
+      .eq("id", appointmentId)
+      .eq("status", "accepted")
+      .select("id")
+      .maybeSingle();
+
+    if (updateError || !updated) {
+      console.error("Não foi possível concluir o atendimento.", {
+        code: updateError?.code,
+        appointmentId,
+      });
+      return {
+        ok: false,
+        error: "Não foi possível encerrar a chamada. Tente novamente.",
+      };
+    }
+  } catch {
+    console.error("Cliente administrativo indisponível para concluir atendimento.", {
+      appointmentId,
+    });
+    return {
+      ok: false,
+      error: "Não foi possível encerrar a chamada agora. Tente novamente.",
+    };
+  }
+
+  revalidatePath("/app/user");
+  revalidatePath("/app/interpreter");
+  revalidatePath(`/app/meeting/${appointmentId}`);
+  revalidatePath(`/app/review/${appointmentId}`);
+  return { ok: true };
+}
+
+export async function expireStaleAppointments(): Promise<void> {
+  const now = new Date();
+
+  try {
+    const admin = createAdminClient();
+
+    const { data: openAppointments, error: openError } = await admin
+      .from("appointments")
+      .select("id, scheduled_at")
+      .eq("status", "open")
+      .lt("scheduled_at", now.toISOString());
+
+    if (openError) {
+      console.error("Não foi possível listar atendimentos abertos expirados.", {
+        code: openError.code,
+      });
+    } else if (openAppointments?.length) {
+      const { error: expireError } = await admin
+        .from("appointments")
+        .update({ status: "expired" })
+        .in(
+          "id",
+          openAppointments.map((appointment) => appointment.id),
+        )
+        .eq("status", "open");
+
+      if (expireError) {
+        console.error("Não foi possível expirar atendimentos abertos.", {
+          code: expireError.code,
+        });
+      }
+    }
+
+    const { data: acceptedAppointments, error: acceptedError } = await admin
+      .from("appointments")
+      .select("id, scheduled_at, duration_minutes")
+      .eq("status", "accepted");
+
+    if (acceptedError) {
+      console.error("Não foi possível listar atendimentos aceitos.", {
+        code: acceptedError.code,
+      });
+      return;
+    }
+
+    const overdueIds =
+      acceptedAppointments
+        ?.filter((appointment) =>
+          appointmentEndsAt(
+            new Date(appointment.scheduled_at),
+            appointment.duration_minutes,
+          ).getTime() <= now.getTime(),
+        )
+        .map((appointment) => appointment.id) ?? [];
+
+    if (overdueIds.length === 0) {
+      return;
+    }
+
+    const { error: completeError } = await admin
+      .from("appointments")
+      .update({ status: "completed" })
+      .in("id", overdueIds)
+      .eq("status", "accepted");
+
+    if (completeError) {
+      console.error("Não foi possível concluir atendimentos vencidos.", {
+        code: completeError.code,
+      });
+    }
+  } catch {
+    console.error("Cliente administrativo indisponível para expirar atendimentos.");
+  }
 }

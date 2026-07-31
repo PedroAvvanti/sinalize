@@ -8,6 +8,7 @@ import {
 import { RequestStatusList } from "@/components/appointments/RequestStatusList";
 import { WeekStrip } from "@/components/appointments/WeekStrip";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { expireStaleAppointments } from "@/actions/appointments";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { isUpcomingAppointment } from "@/lib/domain/meeting-access";
 import { createClient } from "@/lib/supabase/server";
@@ -66,6 +67,8 @@ export default async function UserHomePage() {
   if (profile.role !== "user") {
     redirect(`/app/${profile.role}`);
   }
+
+  await expireStaleAppointments();
 
   const now = new Date();
   const weekStart = new Date(now);

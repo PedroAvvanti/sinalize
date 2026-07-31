@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { JitsiMeetEmbed } from "@/components/meeting/JitsiMeetEmbed";
+import { CompleteMeetingButton } from "@/components/meeting/CompleteMeetingButton";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { getJitsiDomain } from "@/lib/jitsi/config";
 import { canEnterMeeting } from "@/lib/jitsi/meeting-access";
@@ -89,6 +90,9 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
         <Link className="next-call-secondary" href={`/app/${profile.role}`}>
           Sair da sala
         </Link>
+        {appointment.status === "accepted" ? (
+          <CompleteMeetingButton appointmentId={appointment.id} />
+        ) : null}
       </header>
 
       <JitsiMeetEmbed
