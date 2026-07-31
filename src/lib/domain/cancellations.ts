@@ -28,3 +28,34 @@ export function directCancelMessage(): string {
 export function cancelRequestMessage(): string {
   return "Solicitação de cancelamento enviada para análise.";
 }
+
+export type CancellationDecision = "approved" | "rejected";
+
+export type CancellationRequesterRole = "user" | "interpreter";
+
+export type AppointmentTransitionAfterDecision = {
+  status: "open" | "accepted" | "cancelled";
+  clearInterpreter: boolean;
+};
+
+export function nextAppointmentStatusAfterCancellationDecision(
+  decision: CancellationDecision,
+  requestedByRole: CancellationRequesterRole,
+): AppointmentTransitionAfterDecision {
+  if (decision === "rejected") {
+    return { status: "accepted", clearInterpreter: false };
+  }
+
+  if (requestedByRole === "interpreter") {
+    return { status: "open", clearInterpreter: true };
+  }
+
+  return { status: "cancelled", clearInterpreter: false };
+}
+
+export function isCancellationScheduledToday(
+  scheduledAt: Date,
+  now: Date = new Date(),
+): boolean {
+  return civilDateInSaoPaulo(scheduledAt) === civilDateInSaoPaulo(now);
+}

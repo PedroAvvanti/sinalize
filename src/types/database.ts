@@ -276,6 +276,14 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["appointments"]["Row"];
       };
+      decide_cancellation_request: {
+        Args: {
+          p_request_id: string;
+          p_decision: Database["public"]["Enums"]["cancellation_status"];
+          p_admin_decision_note?: string | null;
+        };
+        Returns: Database["public"]["Tables"]["appointments"]["Row"];
+      };
       list_public_profiles: {
         Args: Record<PropertyKey, never>;
         Returns: Database["public"]["Views"]["public_profiles"]["Row"][];

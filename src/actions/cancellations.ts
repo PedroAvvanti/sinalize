@@ -140,3 +140,110 @@ export async function requestOrCancelAppointmentAction(
       : cancelRequestMessage(),
   };
 }
+
+export type DecideCancellationInput = {
+  requestId: string;
+  decision: "approved" | "rejected";
+  note?: string;
+};
+
+export type DecideCancellationResult =
+  | { ok: true; message: string }
+  | { ok: false; error: string };
+
+const ADMIN_NOTE_MAX_LENGTH = 500;
+
+function mapDecideCancellationError(
+  error: { message?: string } | null,
+): string {
+  const message = error?.message?.toLowerCase() ?? "";
+
+  if (message.includes("only admins")) {
+    return "Apenas administradores podem decidir cancelamentos.";
+  }
+  if (message.includes("not pending")) {
+    return "Esta solicitação já foi decidida.";
+  }
+  if (message.includes("not awaiting cancellation")) {
+    return "O atendimento não está aguardando decisão de cancelamento.";
+  }
+  if (message.includes("invalid cancellation decision")) {
+    return "A decisão informada é inválida.";
+  }
+
+  return "Não foi possível registrar a decisão. Tente novamente.";
+}
+
+export async function decideCancellationAction(
+  input: DecideCancellationInput,
+): Promise<DecideCancellationResult> {
+  const note = input.note?.trim() || null;
+
+  if (
+    !input.requestId ||
+    (input.decision !== "approved" && input.decision !== "rejected")
+  ) {
+    return { ok: false, error: "A decisão informada é inválida." };
+  }
+
+  if (note && note.length > ADMIN_NOTE_MAX_LENGTH) {
+    return {
+      ok: false,
+      error: `A observação deve ter no máximo ${ADMIN_NOTE_MAX_LENGTH} caracteres.`,
+    };
+  }
+
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims.sub;
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "Sua sessão expirou. Entre novamente para continuar.",
+    };
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+
+  if (profileError || profile?.role !== "admin") {
+    return {
+      ok: false,
+      error: "Apenas administradores podem decidir cancelamentos.",
+    };
+  }
+
+  const { data: updated, error: rpcError } = await supabase.rpc(
+    "decide_cancellation_request",
+    {
+      p_request_id: input.requestId,
+      p_decision: input.decision,
+      p_admin_decision_note: note,
+    },
+  );
+
+  if (rpcError || !updated) {
+    console.error("Não foi possível decidir o cancelamento.", {
+      code: rpcError?.code,
+      requestId: input.requestId,
+    });
+    return { ok: false, error: mapDecideCancellationError(rpcError) };
+  }
+
+  revalidatePath("/app/admin");
+  revalidatePath("/app/admin/cancellations");
+  revalidatePath("/app/user");
+  revalidatePath("/app/interpreter");
+
+  return {
+    ok: true,
+    message:
+      input.decision === "approved"
+        ? "Cancelamento aprovado."
+        : "Cancelamento rejeitado. O atendimento continua confirmado.",
+  };
+}

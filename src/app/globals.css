@@ -898,20 +898,50 @@ footer span {
 }
 
 .admin-queue-link {
-  display: inline-flex;
+  display: flex;
   min-height: 48px;
   align-items: center;
-  gap: 24px;
-  margin-top: 28px;
+  justify-content: space-between;
+  gap: 16px;
   border-radius: 12px;
-  padding: 0 18px;
+  padding: 14px 18px;
   background: var(--color-primary);
   color: var(--color-primary-ink);
   font-weight: 750;
+  text-decoration: none;
 }
 
-.admin-queue-link span {
+.admin-queue-link > span:last-child {
   font-size: 1.25rem;
+}
+
+.admin-queue-link small {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  opacity: 0.9;
+}
+
+.admin-home {
+  display: grid;
+  gap: 24px;
+}
+
+.admin-home-lead {
+  max-width: 650px;
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.admin-home-links {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-home-links .admin-queue-link {
+  margin-top: 0;
 }
 
 .admin-queue-link:focus-visible {
@@ -953,6 +983,70 @@ footer span {
   font-weight: 750;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.pending-count-urgent {
+  margin-top: 4px;
+  color: #d97706;
+  font-style: normal;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.cancellation-review-card {
+  display: grid;
+  gap: 18px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 16%, transparent);
+  border-radius: 16px;
+  padding: clamp(20px, 3vw, 26px);
+  background: color-mix(in srgb, var(--color-primary) 3%, var(--color-surface));
+}
+
+.cancellation-review-card-urgent {
+  border-color: color-mix(in srgb, #d97706 45%, transparent);
+  background: color-mix(in srgb, #d97706 6%, var(--color-surface));
+}
+
+.cancellation-review-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cancellation-review-card__details {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.cancellation-review-card__details div {
+  display: grid;
+  gap: 4px;
+}
+
+.cancellation-review-card__details dt {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.cancellation-review-card__details dd {
+  margin: 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.cancellation-role-badge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .admin-review-lead {
