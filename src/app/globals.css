@@ -1764,3 +1764,87 @@ footer span {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+.cancel-trigger {
+  border: 1px solid color-mix(in srgb, #c0392b 35%, transparent);
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: transparent;
+  color: #c0392b;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.cancel-trigger:focus-visible {
+  outline: 3px solid color-mix(in srgb, #c0392b 35%, transparent);
+  outline-offset: 2px;
+}
+
+.cancel-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: color-mix(in srgb, #0b1220 55%, transparent);
+}
+
+.cancel-dialog {
+  width: min(100%, 480px);
+  display: grid;
+  gap: 18px;
+  border-radius: 18px;
+  padding: 22px;
+  background: var(--color-surface);
+  box-shadow: 0 24px 60px color-mix(in srgb, #0b1220 25%, transparent);
+}
+
+.cancel-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cancel-dialog__header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.cancel-dialog__close {
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cancel-dialog__body,
+.cancel-dialog__footer {
+  display: grid;
+  gap: 14px;
+}
+
+.cancel-dialog__footer {
+  grid-template-columns: 1fr 1fr;
+}
+
+.cancel-dialog__secondary {
+  min-height: 48px;
+  border: 1px solid color-mix(in srgb, var(--color-muted) 30%, transparent);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 680px) {
+  .cancel-dialog__footer {
+    grid-template-columns: 1fr;
+  }
+}

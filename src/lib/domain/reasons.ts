@@ -31,3 +31,9 @@ export function isAppointmentReasonCode(
 ): value is AppointmentReasonCode {
   return APPOINTMENT_REASONS.some((reason) => reason.value === value);
 }
+
+export function isCancellationReasonCode(
+  value: string,
+): value is CancellationReasonCode {
+  return CANCEL_REASONS.some((reason) => reason.value === value);
+}

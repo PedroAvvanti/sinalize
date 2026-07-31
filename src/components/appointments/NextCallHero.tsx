@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { CancelDialog } from "@/components/appointments/CancelDialog";
 import { isWithinMeetingWindow } from "@/lib/domain/meeting-access";
 import { APPOINTMENT_REASONS } from "@/lib/domain/reasons";
 
@@ -96,6 +97,10 @@ export function NextCallHero({ appointment, requesterName }: NextCallHeroProps) 
         <Link className="next-call-secondary" href="/app/user/request">
           Solicitar intérprete
         </Link>
+        {appointment.status === "open" ||
+        appointment.status === "accepted" ? (
+          <CancelDialog appointmentId={appointment.id} />
+        ) : null}
       </div>
     </section>
   );
