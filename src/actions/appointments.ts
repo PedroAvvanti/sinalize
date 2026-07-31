@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import {
   buildJitsiRoomName,
   isValidDuration,
+  parseScheduledAtIso,
   type AppointmentDuration,
 } from "@/lib/domain/appointments";
 import { isAppointmentReasonCode } from "@/lib/domain/reasons";
@@ -26,13 +27,13 @@ export type CreateAppointmentResult =
 export async function createAppointmentAction(
   input: CreateAppointmentInput,
 ): Promise<CreateAppointmentResult> {
-  const scheduledAt = new Date(input.scheduledAt);
+  const scheduledAt = parseScheduledAtIso(input.scheduledAt);
   const reasonText = input.reasonText?.trim() || null;
 
   if (
     !isValidDuration(input.durationMinutes) ||
     !isAppointmentReasonCode(input.reasonCode) ||
-    Number.isNaN(scheduledAt.getTime()) ||
+    !scheduledAt ||
     scheduledAt.getTime() <= Date.now()
   ) {
     return {
