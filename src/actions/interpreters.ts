@@ -7,6 +7,10 @@ import {
   canReturnIdempotentApplicationSuccess,
   validateCertificate,
 } from "@/lib/interpreters/application";
+import {
+  rejectionReasonForDecision,
+  type InterpreterApplicationDecision,
+} from "@/lib/domain/interpreters";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,6 +18,133 @@ export type InterpreterApplicationActionState = {
   error?: string;
   submitted?: boolean;
 };
+
+export type ReviewInterpreterApplicationResult = {
+  error?: string;
+  reviewed?: boolean;
+};
+
+type ReviewInterpreterApplicationInput = {
+  id: string;
+  decision: InterpreterApplicationDecision;
+  rejectionReason?: string;
+};
+
+export async function reviewInterpreterApplication({
+  id,
+  decision,
+  rejectionReason,
+}: ReviewInterpreterApplicationInput): Promise<ReviewInterpreterApplicationResult> {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const adminId = claimsData?.claims.sub;
+
+  if (!adminId) {
+    return { error: "Sua sessão expirou. Entre novamente para continuar." };
+  }
+
+  const { data: adminProfile, error: adminProfileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", adminId)
+    .single();
+
+  if (adminProfileError || adminProfile?.role !== "admin") {
+    return { error: "Apenas administradores podem revisar candidaturas." };
+  }
+
+  if (!id || (decision !== "approved" && decision !== "rejected")) {
+    return { error: "A decisão informada é inválida." };
+  }
+
+  let normalizedReason: string | null;
+
+  try {
+    normalizedReason = rejectionReasonForDecision(decision, rejectionReason);
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "Informe o motivo da rejeição.",
+    };
+  }
+
+  const reviewedAt = new Date().toISOString();
+  const { data: application, error: reviewError } = await supabase
+    .from("interpreter_applications")
+    .update({
+      status: decision,
+      reviewed_by: adminId,
+      reviewed_at: reviewedAt,
+      rejection_reason: normalizedReason,
+    })
+    .eq("id", id)
+    .eq("status", "pending")
+    .select("profile_id")
+    .maybeSingle();
+
+  if (reviewError || !application) {
+    console.error("Não foi possível revisar a candidatura.", {
+      code: reviewError?.code,
+      applicationId: id,
+    });
+    return {
+      error:
+        "A candidatura não está mais pendente ou não pôde ser atualizada.",
+    };
+  }
+
+  const notification =
+    decision === "approved"
+      ? {
+          profile_id: application.profile_id,
+          type: "interpreter_application_approved",
+          title: "Candidatura aprovada",
+          body: "Seu certificado foi aprovado. A área do intérprete já está liberada.",
+        }
+      : {
+          profile_id: application.profile_id,
+          type: "interpreter_application_rejected",
+          title: "Candidatura precisa de ajustes",
+          body: `Seu certificado não foi aprovado. Motivo: ${normalizedReason}`,
+        };
+  const { error: notificationError } = await supabase
+    .from("notifications")
+    .insert(notification);
+
+  if (notificationError) {
+    const { error: rollbackError } = await supabase
+      .from("interpreter_applications")
+      .update({
+        status: "pending",
+        reviewed_by: null,
+        reviewed_at: null,
+        rejection_reason: null,
+      })
+      .eq("id", id)
+      .eq("status", decision)
+      .eq("reviewed_by", adminId)
+      .eq("reviewed_at", reviewedAt);
+
+    console.error("Não foi possível notificar o intérprete após a revisão.", {
+      code: notificationError.code,
+      rollbackCode: rollbackError?.code,
+      applicationId: id,
+    });
+    return {
+      error: rollbackError
+        ? "A decisão foi registrada, mas a notificação falhou. Recarregue a fila."
+        : "A decisão não foi salva porque a notificação falhou. Tente novamente.",
+    };
+  }
+
+  revalidatePath("/app/admin");
+  revalidatePath("/app/admin/interpreters");
+  revalidatePath("/app/interpreter");
+  revalidatePath("/app/interpreter/onboarding");
+  return { reviewed: true };
+}
 
 export async function submitInterpreterApplication(
   _previousState: InterpreterApplicationActionState,

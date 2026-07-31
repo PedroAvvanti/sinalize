@@ -33,6 +33,22 @@ Aplicação web que conecta pessoas surdas a intérpretes de Libras por videocha
 
 5. Acesse [http://localhost:3000](http://localhost:3000).
 
+## Promover uma conta a administrador
+
+Execute o seed abaixo no SQL Editor do Supabase, substituindo o placeholder
+pelo UUID da conta:
+
+```sql
+update public.profiles
+set role = 'admin'
+where id = '<uuid>';
+-- opcional: espelhar app_metadata via dashboard Auth (não usado na autorização)
+```
+
+A autorização administrativa do Sinalize consulta `profiles.role` por meio de
+`private.current_role()` / `private.is_admin()`. Ela **não** usa
+`user_metadata` nem depende de claims editáveis pelo usuário.
+
 ## Verificação
 
 ```bash
