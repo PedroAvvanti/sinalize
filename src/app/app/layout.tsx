@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { signOutAction } from "@/actions/auth";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeThemePreference } from "@/lib/theme";
@@ -31,6 +32,12 @@ export default async function AppLayout({
     redirect(profileUnavailableLoginPath());
   }
 
+  const { count: unreadNotifications } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("profile_id", userId)
+    .is("read_at", null);
+
   return (
     <ThemeProvider
       initialTheme={normalizeThemePreference(profile.theme_preference)}
@@ -43,6 +50,10 @@ export default async function AppLayout({
           </div>
           <div className="app-account">
             <span className="app-user-name">{profile.full_name}</span>
+            <NotificationBell
+              userId={userId}
+              initialUnread={unreadNotifications ?? 0}
+            />
             <ThemeToggle />
             <form action={signOutAction}>
               <button className="app-signout" type="submit">

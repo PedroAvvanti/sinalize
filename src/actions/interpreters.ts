@@ -12,6 +12,7 @@ import {
   type InterpreterApplicationDecision,
 } from "@/lib/domain/interpreters";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyAdmins } from "@/lib/notifications/dispatch";
 import { createClient } from "@/lib/supabase/server";
 
 export type InterpreterApplicationActionState = {
@@ -148,6 +149,7 @@ export async function reviewInterpreterApplication({
   revalidatePath("/app/admin/interpreters");
   revalidatePath("/app/interpreter");
   revalidatePath("/app/interpreter/onboarding");
+  revalidatePath("/app/notifications");
   return { reviewed: true };
 }
 
@@ -304,5 +306,14 @@ export async function submitInterpreterApplication(
 
   revalidatePath("/app/interpreter");
   revalidatePath("/app/interpreter/onboarding");
+  revalidatePath("/app/admin/interpreters");
+  revalidatePath("/app/notifications");
+
+  await notifyAdmins({
+    type: "interpreter_application_submitted",
+    title: "Nova candidatura de intérprete",
+    body: "Um certificado aguarda revisão administrativa.",
+  });
+
   return { submitted: true };
 }

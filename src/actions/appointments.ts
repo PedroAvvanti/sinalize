@@ -195,5 +195,6 @@ export async function acceptAppointmentAction(
 
   revalidatePath("/app/interpreter");
   revalidatePath("/app/user");
+  revalidatePath("/app/notifications");
   return { ok: true };
 }

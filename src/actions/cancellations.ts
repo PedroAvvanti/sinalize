@@ -8,6 +8,7 @@ import {
   directCancelMessage,
 } from "@/lib/domain/cancellations";
 import { isCancellationReasonCode } from "@/lib/domain/reasons";
+import { insertNotifications, notifyAdmins } from "@/lib/notifications/dispatch";
 import { createClient } from "@/lib/supabase/server";
 
 const REASON_TEXT_MAX_LENGTH = 500;
@@ -132,6 +133,45 @@ export async function requestOrCancelAppointmentAction(
   revalidatePath("/app/user");
   revalidatePath("/app/interpreter");
   revalidatePath("/app/admin");
+  revalidatePath("/app/notifications");
+
+  if (willCancelDirectly) {
+    if (appointment.interpreter_id) {
+      await insertNotifications([
+        {
+          profile_id: appointment.interpreter_id,
+          type: "appointment_cancelled",
+          title: "Atendimento cancelado",
+          body: "O usuário cancelou o atendimento antes do dia agendado.",
+          related_appointment_id: appointment.id,
+        },
+      ]);
+    }
+  } else {
+    await notifyAdmins({
+      type: "cancellation_requested",
+      title: "Cancelamento aguardando decisão",
+      body: "Um participante solicitou cancelamento de atendimento.",
+      related_appointment_id: appointment.id,
+    });
+
+    const otherParticipantId =
+      profile.role === "user"
+        ? appointment.interpreter_id
+        : appointment.requester_id;
+
+    if (otherParticipantId) {
+      await insertNotifications([
+        {
+          profile_id: otherParticipantId,
+          type: "cancellation_requested",
+          title: "Cancelamento em análise",
+          body: "Foi solicitado o cancelamento deste atendimento. Aguarde a decisão administrativa.",
+          related_appointment_id: appointment.id,
+        },
+      ]);
+    }
+  }
 
   return {
     ok: true,
@@ -238,6 +278,29 @@ export async function decideCancellationAction(
   revalidatePath("/app/admin/cancellations");
   revalidatePath("/app/user");
   revalidatePath("/app/interpreter");
+  revalidatePath("/app/notifications");
+
+  const participantIds = [updated.requester_id, updated.interpreter_id].filter(
+    (id): id is string => Boolean(id),
+  );
+
+  if (participantIds.length > 0) {
+    await insertNotifications(
+      participantIds.map((profileId) => ({
+        profile_id: profileId,
+        type: "cancellation_decided",
+        title:
+          input.decision === "approved"
+            ? "Cancelamento aprovado"
+            : "Cancelamento não aprovado",
+        body:
+          input.decision === "approved"
+            ? "A administração aprovou o cancelamento solicitado."
+            : "A administração manteve o atendimento confirmado.",
+        related_appointment_id: updated.id,
+      })),
+    );
+  }
 
   return {
     ok: true,
