@@ -5,10 +5,12 @@ import { revalidatePath } from "next/cache";
 import {
   buildJitsiRoomName,
   isValidDuration,
+  mapAcceptError,
   parseScheduledAtIso,
   type AppointmentDuration,
 } from "@/lib/domain/appointments";
 import { isAppointmentReasonCode } from "@/lib/domain/reasons";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 const REASON_TEXT_MAX_LENGTH = 500;
@@ -23,6 +25,10 @@ export type CreateAppointmentInput = {
 export type CreateAppointmentResult =
   | { ok: true }
   | { ok: false; error: string };
+
+export type AcceptAppointmentResult =
+  | { ok: true }
+  | { ok: false; message: string };
 
 export async function createAppointmentAction(
   input: CreateAppointmentInput,
@@ -97,5 +103,97 @@ export async function createAppointmentAction(
 
   revalidatePath("/app/user");
   revalidatePath("/app/user/request");
+  return { ok: true };
+}
+
+export async function acceptAppointmentAction(
+  appointmentId: string,
+): Promise<AcceptAppointmentResult> {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims.sub;
+
+  if (!userId) {
+    return {
+      ok: false,
+      message: "Sua sessão expirou. Entre novamente para aceitar o pedido.",
+    };
+  }
+
+  const [
+    { data: profile, error: profileError },
+    { data: application, error: applicationError },
+  ] = await Promise.all([
+    supabase.from("profiles").select("role").eq("id", userId).single(),
+    supabase
+      .from("interpreter_applications")
+      .select("status")
+      .eq("profile_id", userId)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  if (
+    profileError ||
+    profile?.role !== "interpreter" ||
+    applicationError ||
+    application?.status !== "approved"
+  ) {
+    return {
+      ok: false,
+      message: "Apenas intérpretes aprovados podem aceitar pedidos.",
+    };
+  }
+
+  const { data: appointment, error: acceptError } = await supabase.rpc(
+    "accept_appointment",
+    { p_appointment_id: appointmentId },
+  );
+
+  if (acceptError || !appointment) {
+    return {
+      ok: false,
+      message: mapAcceptError(acceptError),
+    };
+  }
+
+  try {
+    const admin = createAdminClient();
+    const { error: notificationError } = await admin
+      .from("notifications")
+      .insert([
+        {
+          profile_id: appointment.requester_id,
+          type: "appointment_accepted",
+          title: "Pedido aceito",
+          body: "Um intérprete aceitou seu pedido de atendimento.",
+          related_appointment_id: appointment.id,
+        },
+        {
+          profile_id: userId,
+          type: "appointment_assigned",
+          title: "Atendimento confirmado",
+          body: "O atendimento foi atribuído a você.",
+          related_appointment_id: appointment.id,
+        },
+      ]);
+
+    if (notificationError) {
+      console.error("O pedido foi aceito, mas as notificações falharam.", {
+        code: notificationError.code,
+        appointmentId,
+      });
+    }
+  } catch {
+    console.error(
+      "O pedido foi aceito, mas o cliente de notificações não está configurado.",
+      { appointmentId },
+    );
+  }
+
+  revalidatePath("/app/interpreter");
+  revalidatePath("/app/user");
   return { ok: true };
 }

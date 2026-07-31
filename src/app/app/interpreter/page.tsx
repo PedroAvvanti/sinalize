@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { OpenRequestsList } from "@/components/appointments/OpenRequestsList";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function InterpreterHomePage() {
@@ -35,14 +36,42 @@ export default async function InterpreterHomePage() {
     redirect("/app/interpreter/onboarding");
   }
 
+  const { data: appointments, error: appointmentsError } = await supabase
+    .from("appointments")
+    .select(
+      "id, scheduled_at, duration_minutes, reason_code, reason_text",
+    )
+    .eq("status", "open")
+    .order("scheduled_at", { ascending: true });
+
   return (
-    <section className="app-panel" aria-labelledby="interpreter-home-title">
-      <p className="auth-eyebrow">Área do intérprete</p>
-      <h1 id="interpreter-home-title">Olá! Sua conta está pronta.</h1>
-      <p>
-        O envio de documentos e a agenda serão disponibilizados nas próximas
-        etapas do MVP.
-      </p>
+    <section
+      className="app-panel interpreter-queue"
+      aria-labelledby="interpreter-home-title"
+    >
+      <header className="interpreter-queue__header">
+        <div>
+          <p className="auth-eyebrow">Fila ao vivo</p>
+          <h1 id="interpreter-home-title">Pedidos disponíveis</h1>
+          <p>
+            Escolha um atendimento. A fila se atualiza quando outro intérprete
+            aceita um pedido.
+          </p>
+        </div>
+        <span className="interpreter-queue__live">
+          <i aria-hidden="true" />
+          Atualização em tempo real
+        </span>
+      </header>
+
+      <OpenRequestsList
+        initialAppointments={appointments ?? []}
+        initialError={
+          appointmentsError
+            ? "Não foi possível carregar a fila. Recarregue a página."
+            : undefined
+        }
+      />
     </section>
   );
 }

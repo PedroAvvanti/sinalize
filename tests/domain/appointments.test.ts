@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildJitsiRoomName,
   isValidDuration,
+  mapAcceptError,
   parseScheduledAtIso,
 } from "../../src/lib/domain/appointments";
 
@@ -14,6 +15,12 @@ describe("appointments domain", () => {
 
   it("builds stable room names", () => {
     expect(buildJitsiRoomName("abc")).toMatch(/^sinalize-abc$/);
+  });
+
+  it("maps already accepted", () => {
+    expect(mapAcceptError({ message: "already accepted" })).toBe(
+      "Esse pedido já foi aceito por outra pessoa",
+    );
   });
 
   it.each([

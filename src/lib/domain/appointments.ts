@@ -46,3 +46,11 @@ export function parseScheduledAtIso(value: string): Date | null {
 export function buildJitsiRoomName(appointmentId: string): string {
   return `sinalize-${appointmentId}`;
 }
+
+export function mapAcceptError(error: { message?: string } | null): string {
+  if (error?.message?.toLowerCase().includes("already accepted")) {
+    return "Esse pedido já foi aceito por outra pessoa";
+  }
+
+  return "Não foi possível aceitar este pedido. Tente novamente.";
+}
