@@ -19,4 +19,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA(nextConfig);
+// PWA injeta config webpack; em dev o Next 16 usa Turbopack por padrão.
+export default process.env.NODE_ENV === "development"
+  ? nextConfig
+  : withPWA(nextConfig);
