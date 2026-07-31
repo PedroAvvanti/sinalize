@@ -7,7 +7,8 @@ Aplicação web que conecta pessoas surdas a intérpretes de Libras por videocha
 - Node.js em uma faixa suportada: `^20.19.0 || ^22.13.0 || >=24.0.0`
 - npm
 - Um projeto no [Supabase](https://supabase.com/dashboard/projects)
-- Credenciais do Jitsi as a Service (JaaS)
+
+A videochamada usa o Jitsi Meet público (`meet.jit.si`) embutido no app — **gratuito, sem conta extra**.
 
 ## Executar localmente
 
@@ -23,7 +24,7 @@ Aplicação web que conecta pessoas surdas a intérpretes de Libras por videocha
    cp .env.example .env.local
    ```
 
-3. Preencha `.env.local` com as credenciais do seu projeto Supabase e do JaaS.
+3. Preencha `.env.local` com as credenciais do seu projeto Supabase. O domínio Jitsi padrão é `meet.jit.si` (opcional: `NEXT_PUBLIC_JITSI_DOMAIN`).
 
 4. Inicie o ambiente de desenvolvimento:
 

@@ -26,7 +26,7 @@ Objetivo do MVP acadêmico: entregar um sistema utilizável de ponta a ponta (ca
 - Duração variável: 15, 30 ou 60 minutos
 - Atendimentos gratuitos (sem pagamento)
 - Cancelamentos com regras distintas por papel e dia
-- Videochamada via Jitsi as a Service (JaaS), sem gravação
+- Videochamada via **Jitsi Meet embutido** (`meet.jit.si` + External API), **gratuita**, sem gravação
 - Notificações apenas dentro do aplicativo
 - Avaliação mútua: nota média pública; comentários privados (avaliado + admin)
 - Tema claro/escuro com escolha manual salva no perfil
@@ -40,16 +40,16 @@ Objetivo do MVP acadêmico: entregar um sistema utilizável de ponta a ponta (ca
 - Vídeos explicativos em Libras (estrutura futura possível; UI não depende deles)
 - Gravação de chamadas
 - Aplicativo nativo (React Native/Expo)
-- Self-hosting de Jitsi (preparar abstração; usar JaaS no MVP)
+- JaaS (8x8) ou self-hosting de Jitsi (custo de infra); no MVP usa-se apenas o servidor público gratuito
 - Menores de 18 anos
 
 ---
 
 ## 3. Arquitetura
 
-**Stack:** Next.js (App Router) + React + Supabase (Auth, PostgreSQL, Storage, Realtime, RLS) + JaaS (IFrame API).
+**Stack:** Next.js (App Router) + React + Supabase (Auth, PostgreSQL, Storage, Realtime, RLS) + Jitsi Meet (`meet.jit.si`, External API embutida).
 
-Um único aplicativo Next.js entrega três experiências por papel. Rotas de servidor e Server Actions concentram regras sensíveis (aprovação, cancelamento administrativo, geração de JWT/token da sala). O cliente nunca recebe `service_role` nem gera tokens JaaS.
+Um único aplicativo Next.js entrega três experiências por papel. Rotas de servidor e Server Actions concentram regras sensíveis (aprovação, cancelamento administrativo, **autorização para entrar na sala**). O cliente nunca recebe `service_role`. **Não há JWT JaaS** — o acesso à sala é controlado pela app (participante + janela de horário); o nome da sala permanece opaco (`sinalize-<uuid>`).
 
 ```
 [Usuário / Intérprete / Admin]
@@ -59,8 +59,9 @@ Um único aplicativo Next.js entrega três experiências por papel. Rotas de ser
             │
      ┌──────┴──────┐
      ▼             ▼
- Supabase        JaaS
- (dados/auth)   (só na chamada)
+ Supabase     meet.jit.si
+ (dados/auth)  (só na chamada;
+               embed External API)
 ```
 
 ### Decisões técnicas
@@ -71,7 +72,7 @@ Um único aplicativo Next.js entrega três experiências por papel. Rotas de ser
 | Banco | PostgreSQL via Supabase, RLS em todas as tabelas públicas |
 | Papel do usuário | `profiles.role` + `app_metadata` para autorização; nunca `user_metadata` |
 | Aceite | Update atômico `WHERE status = 'open'` |
-| Vídeo | JaaS; `meet.jit.si` não é produção para embed |
+| Vídeo | Embed gratuito via `meet.jit.si` (External API); sala opaca; gate no servidor; sem gravação |
 | Documentos | Bucket Storage privado; URLs assinadas |
 
 ---
@@ -207,10 +208,12 @@ Motivos de cancelamento (exemplos fixos no MVP): `imprevisto`, `doenca`, `confli
 
 ### 6.4 Videochamada
 
-1. Perto do horário, servidor gera/valida token JaaS e nome da sala
-2. UI embute IFrame; gravação desabilitada
-3. Falha de mídia/API: mensagem clara + “Tentar de novo”
-4. Conclusão no MVP: qualquer participante pode marcar “chamada encerrada”; se ninguém marcar, o sistema passa para `completed` após `scheduled_at + duration_minutes`. Em seguida, abre o fluxo de avaliação
+1. Perto do horário, o **servidor** valida que o usuário é requester ou intérprete do appointment, status adequado (`accepted` ou `cancel_requested` enquanto agendado) e janela de entrada (ex.: 10 min antes até `scheduled_at + duration_minutes`)
+2. A UI embute a sala com **Jitsi External API** apontando para `meet.jit.si` e `jitsi_room_name` já persistido; experiência **dentro do Sinalize** (iframe/componente dedicado)
+3. Gravação desabilitada via `configOverwrite`; sem conta 8x8/JaaS
+4. **Segurança MVP:** nome de sala imprevisível + gate na rota; quem souber o nome da sala ainda poderia tentar entrar direto no Meet — aceitável para MVP acadêmico gratuito
+5. Falha de mídia/API: mensagem clara + “Tentar de novo”
+6. Conclusão no MVP: qualquer participante pode marcar “chamada encerrada”; se ninguém marcar, o sistema passa para `completed` após `scheduled_at + duration_minutes`. Em seguida, abre o fluxo de avaliação
 
 ### 6.5 Avaliação
 
@@ -260,7 +263,7 @@ Motivos de cancelamento (exemplos fixos no MVP): `imprevisto`, `doenca`, `confli
 |---------|----------|
 | Aceite concorrente | Segundo perde; mensagem clara; lista atualiza |
 | Cancelamento pendente | Continua agendado; status “em análise” |
-| Falha JaaS/câmera | Erro + tentar de novo |
+| Falha Jitsi/câmera | Erro + tentar de novo |
 | Intérprete não aprovado | App acessível; fila/sala bloqueadas |
 | Sem chamadas | Empty state + CTA solicitar |
 | Certificado rejeitado | Motivo + reenvio |
@@ -282,7 +285,7 @@ Motivos de cancelamento (exemplos fixos no MVP): `imprevisto`, `doenca`, `confli
 
 - Cadastro → aprovação
 - Solicitação → aceite
-- Entrada na sala JaaS sem gravação
+- Entrada na sala Jitsi embutida, sem gravação
 - Tema e uso PWA no celular
 
 ### Acessibilidade
@@ -297,7 +300,7 @@ Motivos de cancelamento (exemplos fixos no MVP): `imprevisto`, `doenca`, `confli
 2. Aprovação de intérpretes (Storage + admin)
 3. Solicitações, Realtime, aceite atômico
 4. Cancelamentos e regras de dia
-5. Integração JaaS e sala
+5. Integração Jitsi Meet (embed) e sala
 6. Avaliações, histórico, polish de acessibilidade/PWA
 
 ---
@@ -306,7 +309,7 @@ Motivos de cancelamento (exemplos fixos no MVP): `imprevisto`, `doenca`, `confli
 
 - Projeto Supabase já existente e acessível via MCP (autenticado)
 - Variáveis: URL, anon/publishable key no cliente; service role só no servidor
-- Secrets JaaS só no servidor
+- **Vídeo:** sem secrets — domínio padrão `meet.jit.si`; opcional `NEXT_PUBLIC_JITSI_DOMAIN` para override em dev
 - Migrations versionadas no repositório
 
 ---

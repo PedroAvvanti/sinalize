@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Entregar o MVP do Sinalize — PWA Next.js que conecta usuários surdos a intérpretes de Libras via solicitações, aceite atômico, cancelamentos moderados, videochamada JaaS e avaliação mútua.
+**Goal:** Entregar o MVP do Sinalize — PWA Next.js que conecta usuários surdos a intérpretes de Libras via solicitações, aceite atômico, cancelamentos moderados, videochamada Jitsi Meet embutida (gratuita) e avaliação mútua.
 
-**Architecture:** Um app Next.js (App Router) com UI React, Server Actions para regras sensíveis, Supabase (Auth, PostgreSQL + RLS, Storage, Realtime) e JaaS apenas na sala. Papéis `user` | `interpreter` | `admin` em `profiles` + `app_metadata`.
+**Architecture:** Um app Next.js (App Router) com UI React, Server Actions para regras sensíveis, Supabase (Auth, PostgreSQL + RLS, Storage, Realtime) e **embed Jitsi Meet** (`meet.jit.si`) apenas na sala. Papéis `user` | `interpreter` | `admin` em `profiles` + `app_metadata`.
 
-**Tech Stack:** Next.js 16.2.12, React 19.2.8, TypeScript, Tailwind CSS, `@supabase/ssr`, `@supabase/supabase-js`, Vitest, jose (JWT JaaS), next-pwa ou `@ducanh2912/next-pwa`.
+**Tech Stack:** Next.js 16.2.12, React 19.2.8, TypeScript, Tailwind CSS, `@supabase/ssr`, `@supabase/supabase-js`, Vitest, next-pwa ou `@ducanh2912/next-pwa`.
 
 **Spec:** `docs/superpowers/specs/2026-07-29-sinalize-mvp-design.md`
 
@@ -15,7 +15,7 @@
 - Somente adultos (18+); declaração obrigatória no cadastro
 - Sem pagamento, e-mail/WhatsApp, gravação de chamada ou app nativo
 - Notificações só dentro do app
-- `meet.jit.si` não embutir em produção — usar JaaS
+- Videochamada gratuita: embed **Jitsi Meet** via `meet.jit.si` (External API); sem JaaS, sem JWT, sem gravação
 - Nunca expor `service_role` no cliente; nunca autorizar via `user_metadata`
 - Aceite atômico: `UPDATE … WHERE status = 'open'`
 - Temas claro/escuro manuais; azul do logo `#0878FF` como primária
@@ -152,10 +152,7 @@ Marca Sinalize + logo + CTA “Entrar” / “Criar conta” + uma frase. Sem ca
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-JAAS_APP_ID=
-JAAS_API_KEY_ID=
-JAAS_PRIVATE_KEY=
-JAAS_DOMAIN=
+NEXT_PUBLIC_JITSI_DOMAIN=meet.jit.si
 ```
 
 README: Node 20+, `npm install`, copiar `.env.example`, link ao projeto Supabase, `npm run dev`.
@@ -639,28 +636,31 @@ git commit -am "feat: in-app notifications for key events"
 
 ---
 
-### Task 13: JaaS — token no servidor e sala embutida
+### Task 13: Jitsi Meet embed — sala embutida (gratuita)
 
 **Files:**
-- Create: `src/lib/jaas/token.ts`, `src/app/api/jaas-token/route.ts`, `src/app/app/meeting/[appointmentId]/page.tsx`, `src/components/meeting/JaaSEmbed.tsx`
-- Test: unitário de claims do JWT (sem chave real: mock private key em teste)
+- Create: `src/lib/jitsi/config.ts`, `src/lib/jitsi/meeting-access.ts`, `tests/domain/meeting-access.test.ts`, `src/app/app/meeting/[appointmentId]/page.tsx`, `src/components/meeting/JitsiMeetEmbed.tsx`
+- Test: unitário de regras de acesso (participante, status, janela de horário)
 
 **Interfaces:**
-- Produces: `createJaasJwt({ roomName, userId, userName, moderator: boolean }): string`
-- `GET /api/jaas-token?appointmentId=` valida participante + status `accepted`/`cancel_requested` e janela de horário (ex.: 10 min antes até fim)
+- Produces: `canEnterMeeting({ appointment, userId, now }): { ok: true } | { ok: false; reason: string }`
+- Página `/app/meeting/[appointmentId]` — server gate; só então renderiza embed
+- `JitsiMeetEmbed({ domain, roomName, displayName })` carrega `external_api.js` do domínio (padrão `meet.jit.si`)
 
 **Regras:**
-- Gravação desabilitada nas `configOverwrite` / `interfaceConfigOverwrite`
+- Sem JWT; sem variáveis JaaS
+- Gravação desabilitada em `configOverwrite` / `interfaceConfigOverwrite`
 - Erro de load: banner “Não foi possível abrir a sala” + botão Tentar de novo
+- Gate: requester ou interpreter do appointment; status `accepted` ou `cancel_requested`; janela ex.: 10 min antes até fim
 
-- [ ] **Step 1: Implementar JWT RS256 com `jose` conforme docs JaaS**
-- [ ] **Step 2: Route handler autoriza só requester/interpreter do appointment**
-- [ ] **Step 3: Embed `external_api.js` do domínio JaaS (não meet.jit.si)**
-- [ ] **Step 4: Documentar variáveis JaaS no README**
+- [ ] **Step 1: Testes de `canEnterMeeting` (RED → GREEN)**
+- [ ] **Step 2: Página server valida participante + horário antes de montar embed**
+- [ ] **Step 3: Componente client com `JitsiMeetExternalAPI` + script `https://{domain}/external_api.js`**
+- [ ] **Step 4: Documentar no README (sem conta JaaS; opcional `NEXT_PUBLIC_JITSI_DOMAIN`)**
 - [ ] **Step 5: Commit**
 
 ```bash
-git commit -am "feat: embed JaaS meeting room with server JWT"
+git commit -am "feat: embed Jitsi Meet room in app"
 ```
 
 ---
@@ -725,7 +725,7 @@ git commit -am "feat: history, profile and role shells"
 
 Seções obrigatórias:
 1. O que é o Sinalize  
-2. Pré-requisitos (Node, conta Supabase, conta JaaS)  
+2. Pré-requisitos (Node, conta Supabase) — **vídeo usa meet.jit.si gratuito, sem conta extra**  
 3. Clone e `npm install`  
 4. Configurar `.env`  
 5. Aplicar migrations  
@@ -753,7 +753,7 @@ git commit -am "feat: PWA support, a11y polish and complete README"
 | Fila + aceite atômico | 7, 8 |
 | Duração 15/30/60 | 7 |
 | Cancelamentos + motivos | 10, 11 |
-| JaaS sem gravação | 13 |
+| Jitsi Meet embed gratuito, sem gravação | 13 |
 | Notificações in-app | 12 |
 | Avaliações nota pública / comentário privado | 14 |
 | Tema manual | 4 |
