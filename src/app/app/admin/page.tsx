@@ -43,6 +43,11 @@ export default async function AdminHomePage() {
           </span>
           <span aria-hidden="true">→</span>
         </Link>
+
+        <Link className="admin-queue-link" href="/app/admin/appointments">
+          <span>Visão geral de atendimentos</span>
+          <span aria-hidden="true">→</span>
+        </Link>
       </div>
     </section>
   );

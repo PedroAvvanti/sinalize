@@ -2211,3 +2211,159 @@ footer span {
   color: var(--color-muted);
   line-height: 1.6;
 }
+
+.history-page,
+.profile-page,
+.agenda-page,
+.admin-appointments-page {
+  display: grid;
+  gap: 20px;
+}
+
+.history-page__header,
+.profile-page__header,
+.agenda-page__header,
+.admin-appointments-page__header {
+  display: grid;
+  gap: 8px;
+}
+
+.history-page__lead,
+.profile-page__lead,
+.agenda-page__lead,
+.admin-appointments-page__lead {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.history-list,
+.agenda-list,
+.admin-appointments-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history-list__item,
+.agenda-list__item,
+.admin-appointments-list__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid color-mix(in srgb, var(--color-muted) 20%, transparent);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.history-list__reason,
+.agenda-list__reason,
+.admin-appointments-list__reason {
+  margin: 0 0 4px;
+  font-weight: 750;
+}
+
+.history-list__duration,
+.agenda-list__duration,
+.admin-appointments-list__people {
+  margin: 6px 0 0;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+}
+
+.history-list__aside {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.history-list__review-link {
+  font-size: 0.88rem;
+  font-weight: 750;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.agenda-list__requester {
+  margin: 0 0 4px;
+  font-weight: 800;
+}
+
+.history-empty {
+  display: grid;
+  gap: 8px;
+  padding: 20px;
+  border: 1px dashed color-mix(in srgb, var(--color-muted) 28%, transparent);
+  border-radius: 12px;
+}
+
+.history-empty h2,
+.history-empty p {
+  margin: 0;
+}
+
+.history-empty p {
+  color: var(--color-muted);
+}
+
+.profile-form {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-form__meta {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.profile-form__meta div {
+  display: grid;
+  gap: 2px;
+}
+
+.profile-form__meta dt {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.profile-form__meta dd {
+  margin: 0;
+  font-weight: 750;
+}
+
+.profile-form__theme {
+  display: grid;
+  gap: 8px;
+}
+
+.profile-form__theme-label {
+  margin: 0;
+  font-weight: 750;
+}
+
+.interpreter-queue__actions {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+@media (max-width: 680px) {
+  .history-list__item,
+  .agenda-list__item,
+  .admin-appointments-list__item {
+    flex-direction: column;
+  }
+
+  .history-list__aside {
+    justify-items: start;
+  }
+
+  .interpreter-queue__actions {
+    justify-items: start;
+  }
+}

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { expireStaleAppointments } from "@/actions/appointments";
@@ -61,10 +62,15 @@ export default async function InterpreterHomePage() {
             aceita um pedido.
           </p>
         </div>
-        <span className="interpreter-queue__live">
-          <i aria-hidden="true" />
-          Atualização em tempo real
-        </span>
+        <div className="interpreter-queue__actions">
+          <Link className="next-call-secondary" href="/app/interpreter/agenda">
+            Ver agenda
+          </Link>
+          <span className="interpreter-queue__live">
+            <i aria-hidden="true" />
+            Atualização em tempo real
+          </span>
+        </div>
       </header>
 
       <OpenRequestsList

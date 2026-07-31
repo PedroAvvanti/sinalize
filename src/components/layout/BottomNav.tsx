@@ -59,6 +59,6 @@ export function BottomNav({ items }: BottomNavProps) {
 export const USER_BOTTOM_NAV_ITEMS: BottomNavItem[] = [
   { href: "/app/user", label: "Início" },
   { href: "/app/user/request", label: "Pedidos" },
-  { href: "/app/user/history", label: "Histórico", disabled: true },
-  { href: "/app/user/profile", label: "Perfil", disabled: true },
+  { href: "/app/user/history", label: "Histórico" },
+  { href: "/app/user/profile", label: "Perfil" },
 ];
