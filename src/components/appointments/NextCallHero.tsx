@@ -29,19 +29,54 @@ const statusLabels: Record<NextCallAppointment["status"], string> = {
   cancel_requested: "Cancelamento em análise",
 };
 
+function HeroGesture() {
+  return (
+    <svg
+      className="next-call-hero__gesture"
+      aria-hidden="true"
+      viewBox="0 0 320 220"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        className="next-call-hero__gesture-path next-call-hero__gesture-path--primary"
+        d="M28 152 C72 48, 128 188, 188 78 C228 28, 268 92, 304 54"
+        stroke="#0878ff"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        className="next-call-hero__gesture-path next-call-hero__gesture-path--soft"
+        d="M48 178 C98 88, 148 198, 214 108 C248 68, 278 128, 308 96"
+        stroke="#0878ff"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.38"
+      />
+    </svg>
+  );
+}
+
 export function NextCallHero({ appointment, requesterName }: NextCallHeroProps) {
   const greeting = requesterName.trim()
-    ? `Olá, ${requesterName.trim()}`
-    : "Olá";
+    ? `Olá, ${requesterName.trim()}.`
+    : "Olá.";
 
   if (!appointment) {
     return (
-      <section className="next-call-hero next-call-hero-empty" aria-labelledby="next-call-title">
-        <p className="auth-eyebrow">Seu início</p>
-        <h1 id="next-call-title">{greeting}</h1>
+      <section
+        className="next-call-hero next-call-hero-empty"
+        aria-labelledby="next-call-title"
+      >
+        <HeroGesture />
+        <p className="auth-eyebrow">Hoje</p>
+        <h1 id="next-call-title" className="next-call-hero__title">
+          {greeting}
+        </h1>
         <p className="next-call-lead">
-          Quando você solicitar um atendimento, a próxima chamada aparecerá
-          aqui em destaque.
+          Solicite um intérprete e acompanhe a próxima chamada aqui.
         </p>
         <Link className="user-request-link" href="/app/user/request">
           Solicitar intérprete <span aria-hidden="true">→</span>
@@ -61,15 +96,18 @@ export function NextCallHero({ appointment, requesterName }: NextCallHeroProps) 
 
   return (
     <section className="next-call-hero" aria-labelledby="next-call-title">
+      <HeroGesture />
       <div className="next-call-hero__header">
         <div>
           <p className="auth-eyebrow">Próxima chamada</p>
-          <h1 id="next-call-title">{greeting}</h1>
+          <h1 id="next-call-title" className="next-call-hero__title">
+            {greeting}
+          </h1>
         </div>
         <span className="next-call-status">{statusLabels[appointment.status]}</span>
       </div>
 
-      <div className="next-call-card">
+      <div className="next-call-details">
         <p className="next-call-reason">{reason}</p>
         <time dateTime={appointment.scheduled_at}>
           {dateFormatter.format(scheduledAt)}
