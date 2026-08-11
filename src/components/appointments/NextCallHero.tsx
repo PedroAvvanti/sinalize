@@ -39,7 +39,7 @@ function HeroGesture() {
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
-        className="next-call-hero__gesture-path next-call-hero__gesture-path--primary"
+        className="next-call-hero__gesture-path"
         d="M28 152 C72 48, 128 188, 188 78 C228 28, 268 92, 304 54"
         stroke="#0878ff"
         strokeWidth="2.5"

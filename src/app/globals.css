@@ -2783,15 +2783,16 @@ footer {
   pointer-events: none;
 }
 
+/* Path lengths measured via cubic sampling (primary ≈328.34, soft ≈299.76). */
 .next-call-hero__gesture-path {
-  stroke-dasharray: 520;
-  stroke-dashoffset: 520;
+  stroke-dasharray: 329;
+  stroke-dashoffset: 329;
   animation: gesture-draw 1.25s ease-out 0.15s forwards;
 }
 
 .next-call-hero__gesture-path--soft {
-  stroke-dasharray: 480;
-  stroke-dashoffset: 480;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
   animation-delay: 0.28s;
 }
 
