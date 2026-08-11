@@ -45,7 +45,6 @@ export function WeekStrip({
     <section className="week-strip" aria-labelledby="week-strip-title">
       <div className="week-strip__header">
         <h2 id="week-strip-title">Esta semana</h2>
-        <p>Seus atendimentos nos próximos dias</p>
       </div>
       <ol className="week-strip__days">
         {days.map((day) => {
@@ -70,11 +69,7 @@ export function WeekStrip({
                 >
                   {dayAppointments.length}
                 </span>
-              ) : (
-                <span className="week-strip__marker week-strip__marker-empty" aria-hidden="true">
-                  ·
-                </span>
-              )}
+              ) : null}
             </li>
           );
         })}
