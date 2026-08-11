@@ -137,7 +137,6 @@ export default async function UserHomePage() {
 
       {!hasAnyUpcoming ? (
         <EmptyState
-          icon="◎"
           title="Nenhuma chamada agendada"
           description="Solicite um intérprete quando precisar de apoio em Libras."
           action={

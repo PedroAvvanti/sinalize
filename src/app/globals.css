@@ -2965,32 +2965,30 @@ footer {
 
 .empty-state {
   display: grid;
-  justify-items: center;
+  justify-items: start;
   gap: 8px;
-  border: 1px dashed color-mix(in srgb, var(--color-muted) 35%, transparent);
-  border-radius: 16px;
-  padding: 28px 20px;
-  text-align: center;
+  border: none;
+  border-top: 1px dashed color-mix(in srgb, var(--color-muted) 35%, transparent);
+  border-radius: 0;
+  padding: 24px 0 8px;
+  text-align: left;
 }
 
 .empty-state__icon {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--color-accent-soft) 12%, transparent);
   color: var(--color-primary);
-  font-size: 1.2rem;
-  font-weight: 850;
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
-.empty-state h2,
+.empty-state h2 {
+  margin: 0;
+  font-family: var(--font-accent), Georgia, "Times New Roman", serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
 .empty-state p {
   margin: 0;
-}
-
-.empty-state p {
   max-width: 420px;
   color: var(--color-muted);
   line-height: 1.5;
@@ -3002,17 +3000,19 @@ footer {
 
 .request-status-list {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .request-status-list h2 {
   margin: 0;
-  font-size: 1.05rem;
+  font-family: var(--font-accent), Georgia, "Times New Roman", serif;
+  font-size: 1.15rem;
+  font-weight: 500;
 }
 
 .request-status-list ul {
   display: grid;
-  gap: 10px;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -3020,12 +3020,18 @@ footer {
 
 .request-status-item {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  border: 1px solid color-mix(in srgb, var(--color-muted) 20%, transparent);
-  border-radius: 12px;
-  padding: 14px 16px;
+  gap: 16px;
+  border: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-muted) 22%, transparent);
+  border-radius: 0;
+  padding: 14px 0;
+  background: transparent;
+}
+
+.request-status-item:last-child {
+  border-bottom: none;
 }
 
 .request-status-item__reason {
@@ -3040,31 +3046,29 @@ footer {
 
 .request-status-badge {
   flex: 0 0 auto;
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 0.75rem;
-  font-weight: 800;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 0.8rem;
+  font-weight: 750;
+  letter-spacing: 0.01em;
 }
 
 .request-status-badge-open {
-  background: color-mix(in srgb, var(--color-accent-soft) 16%, transparent);
   color: var(--color-primary);
 }
 
 .request-status-badge-accepted,
 .request-status-badge-completed {
-  background: color-mix(in srgb, #1f9d55 16%, transparent);
   color: #1f9d55;
 }
 
 .request-status-badge-cancel_requested {
-  background: color-mix(in srgb, #d97706 16%, transparent);
   color: #d97706;
 }
 
 .request-status-badge-cancelled,
 .request-status-badge-expired {
-  background: color-mix(in srgb, var(--color-muted) 16%, transparent);
   color: var(--color-muted);
 }
 
