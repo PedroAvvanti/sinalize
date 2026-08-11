@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
+import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 
 import "./globals.css";
 
-const sourceSerif = Source_Serif_4({
+const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-accent",
-  weight: ["400", "600"],
+  weight: ["500", "600", "700"],
 });
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -51,7 +51,7 @@ export default function RootLayout({
     <html
       data-theme="light"
       lang="pt-BR"
-      className={`${sourceSerif.variable} ${plusJakarta.variable}`}
+      className={`${fraunces.variable} ${plusJakarta.variable}`}
       suppressHydrationWarning
     >
       <body>
