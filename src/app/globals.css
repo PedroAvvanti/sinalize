@@ -1670,28 +1670,79 @@ footer {
 
 .app-header {
   display: flex;
-  min-height: 96px;
+  min-height: 64px;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
   border-bottom: 1px solid
-    color-mix(in srgb, var(--color-primary) 14%, transparent);
-  padding: 14px clamp(20px, 6vw, 72px);
-  background: var(--color-surface);
+    color-mix(in srgb, var(--color-primary) 12%, transparent);
+  padding: 8px clamp(16px, 5vw, 56px);
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+}
+
+.app-header .brand img {
+  width: 48px;
+  height: 48px;
+}
+
+.app-header .brand {
+  font-size: 1.2rem;
 }
 
 .app-account {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   color: var(--color-muted);
 }
 
-.app-user-name {
-  max-width: 20ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.app-avatar-link {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1.5px solid color-mix(in srgb, var(--color-primary) 38%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+  color: var(--color-primary);
+  font-family: var(--font-ui), var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.app-avatar-link:hover {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface));
+}
+
+.app-avatar-link:focus-visible {
+  outline: 3px solid var(--color-accent-soft);
+  outline-offset: 2px;
+}
+
+.app-header .theme-toggle {
+  min-height: 36px;
+  gap: 0;
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.app-header .theme-toggle-copy {
+  display: none;
+}
+
+.app-header .app-signout {
+  min-height: 36px;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 650;
 }
 
 .theme-control {
@@ -1838,6 +1889,14 @@ footer {
   cursor: pointer;
   font: inherit;
   font-weight: 700;
+}
+
+.profile-signout {
+  margin: 0;
+}
+
+.profile-signout .app-signout {
+  width: 100%;
 }
 
 .app-content {
@@ -2011,23 +2070,13 @@ footer {
 }
 
 @media (max-width: 560px) {
-  .app-header,
-  .app-account {
-    align-items: flex-start;
-  }
-
   .app-header {
-    flex-direction: column;
+    gap: 12px;
   }
 
   .app-account {
-    width: 100%;
     flex-wrap: wrap;
-  }
-
-  .app-user-name {
-    width: 100%;
-    max-width: none;
+    justify-content: flex-end;
   }
 
   .theme-toggle-error {

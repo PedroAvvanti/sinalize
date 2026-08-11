@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/actions/auth";
@@ -6,6 +7,7 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
+import { getInitials } from "@/lib/profile/initials";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeThemePreference } from "@/lib/theme";
 
@@ -24,7 +26,7 @@ export default async function AppLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, theme_preference")
+    .select("full_name, theme_preference, role")
     .eq("id", userId)
     .single();
 
@@ -38,6 +40,12 @@ export default async function AppLayout({
     .eq("profile_id", userId)
     .is("read_at", null);
 
+  const isUser = profile.role === "user";
+  const avatarHref = isUser
+    ? "/app/user/profile"
+    : `/app/${profile.role}`;
+  const initials = getInitials(profile.full_name ?? "");
+
   return (
     <ThemeProvider
       initialTheme={normalizeThemePreference(profile.theme_preference)}
@@ -45,21 +53,33 @@ export default async function AppLayout({
       <div className="app-shell">
         <header className="app-header">
           <div className="brand">
-            <Image src="/logo.png" alt="" width={80} height={80} priority />
+            <Image src="/logo.png" alt="" width={48} height={48} priority />
             <span>Sinalize</span>
           </div>
           <div className="app-account">
-            <span className="app-user-name">{profile.full_name}</span>
             <NotificationBell
               userId={userId}
               initialUnread={unreadNotifications ?? 0}
             />
-            <ThemeToggle />
-            <form action={signOutAction}>
-              <button className="app-signout" type="submit">
-                Sair
-              </button>
-            </form>
+            {!isUser ? (
+              <>
+                <ThemeToggle />
+                <form action={signOutAction}>
+                  <button className="app-signout" type="submit">
+                    Sair
+                  </button>
+                </form>
+              </>
+            ) : null}
+            <Link
+              className="app-avatar-link"
+              href={avatarHref}
+              aria-label={
+                isUser ? "Abrir perfil" : "Ir para a página inicial"
+              }
+            >
+              {initials}
+            </Link>
           </div>
         </header>
         <main className="app-content">{children}</main>

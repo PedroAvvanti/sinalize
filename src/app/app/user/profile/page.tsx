@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { signOutAction } from "@/actions/auth";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { createClient } from "@/lib/supabase/server";
@@ -43,6 +44,12 @@ export default async function UserProfilePage() {
         averageRating={profile.average_rating}
         roleLabel="Usuário"
       />
+
+      <form action={signOutAction} className="profile-signout">
+        <button className="app-signout" type="submit">
+          Sair
+        </button>
+      </form>
 
       <Link className="next-call-secondary" href="/app/user">
         Voltar ao início
