@@ -3035,8 +3035,19 @@ footer {
 }
 
 .bottom-nav__item-active {
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  background: transparent;
   color: var(--color-primary);
+  font-weight: 800;
+}
+
+.bottom-nav__item-active::before {
+  content: "";
+  display: block;
+  width: 18px;
+  height: 3px;
+  margin: 0 auto 4px;
+  border-radius: 2px;
+  background: var(--color-primary);
 }
 
 .bottom-nav__item-disabled {
