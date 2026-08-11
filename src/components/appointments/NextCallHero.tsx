@@ -46,15 +46,6 @@ function HeroGesture() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path
-        className="next-call-hero__gesture-path next-call-hero__gesture-path--soft"
-        d="M48 178 C98 88, 148 198, 214 108 C248 68, 278 128, 308 96"
-        stroke="#0878ff"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.38"
-      />
     </svg>
   );
 }

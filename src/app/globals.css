@@ -2783,17 +2783,11 @@ footer {
   pointer-events: none;
 }
 
-/* Path lengths measured via cubic sampling (primary ≈328.34, soft ≈299.76). */
+/* Path length measured via cubic sampling (≈328.34). */
 .next-call-hero__gesture-path {
   stroke-dasharray: 329;
   stroke-dashoffset: 329;
   animation: gesture-draw 1.25s ease-out 0.15s forwards;
-}
-
-.next-call-hero__gesture-path--soft {
-  stroke-dasharray: 300;
-  stroke-dashoffset: 300;
-  animation-delay: 0.28s;
 }
 
 .next-call-hero__header,
@@ -2963,6 +2957,30 @@ footer {
   text-align: center;
 }
 
+@media (max-width: 360px) {
+  .week-strip__days {
+    gap: 2px;
+  }
+
+  .week-strip__day {
+    padding: 6px 1px 8px;
+  }
+
+  .week-strip__weekday {
+    font-size: 0.58rem;
+  }
+
+  .week-strip__date {
+    font-size: 0.82rem;
+  }
+
+  .week-strip__marker {
+    min-width: 16px;
+    padding: 1px 4px;
+    font-size: 0.62rem;
+  }
+}
+
 .empty-state {
   display: grid;
   justify-items: start;
@@ -3072,6 +3090,24 @@ footer {
   color: var(--color-muted);
 }
 
+[data-theme="dark"] .request-status-badge-open {
+  color: #5babff;
+}
+
+[data-theme="dark"] .request-status-badge-accepted,
+[data-theme="dark"] .request-status-badge-completed {
+  color: #4ade80;
+}
+
+[data-theme="dark"] .request-status-badge-cancel_requested {
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .request-status-badge-cancelled,
+[data-theme="dark"] .request-status-badge-expired {
+  color: color-mix(in srgb, var(--color-muted) 88%, var(--color-ink));
+}
+
 .bottom-nav {
   position: fixed;
   right: 0;
@@ -3106,6 +3142,17 @@ footer {
   text-decoration: none;
 }
 
+/* Reserve trace height on all items so active/inactive align. */
+.bottom-nav__item::before {
+  content: "";
+  display: block;
+  width: 18px;
+  height: 3px;
+  margin: 0 auto 4px;
+  border-radius: 2px;
+  background: transparent;
+}
+
 .bottom-nav__item-active {
   background: transparent;
   color: var(--color-primary);
@@ -3113,12 +3160,6 @@ footer {
 }
 
 .bottom-nav__item-active::before {
-  content: "";
-  display: block;
-  width: 18px;
-  height: 3px;
-  margin: 0 auto 4px;
-  border-radius: 2px;
   background: var(--color-primary);
 }
 
