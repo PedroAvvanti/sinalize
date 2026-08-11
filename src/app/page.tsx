@@ -36,11 +36,11 @@ const audiences = [
       "A Sinalize coloca você no centro da comunicação. Agende quando precisar, escolha o contexto da conversa e conecte-se com intérpretes validados — no consultório, no trabalho, em reuniões ou no dia a dia, sem depender de familiares ou amigos para intermediar.",
   },
   {
-    title: "Familiares e amigos",
+    title: "Intérpretes de Libras",
     description:
-      "Apoie quem você ama em momentos importantes com interpretação profissional.",
+      "Atenda em videochamada, com agenda organizada e credenciais validadas pela plataforma.",
     details:
-      "Em consultas, reuniões escolares ou momentos delicados, um intérprete profissional garante que a pessoa surda seja ouvida diretamente. Você pode acompanhar a conversa com mais tranquilidade, sabendo que a comunicação está sendo feita com qualidade e respeito.",
+      "Cadastre-se, envie suas certificações para validação e receba solicitações de atendimento alinhadas à sua disponibilidade. Você entra na chamada pelo Sinalize, conduz a interpretação em um ambiente dedicado e constrói reputação com avaliações dos usuários.",
   },
   {
     title: "Empresas e serviços",

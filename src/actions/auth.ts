@@ -1,19 +1,72 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import {
   authMessageFor,
   resolvePostLoginPath,
+  validatePasswordConfirmation,
   validateSignupEligibility,
 } from "@/lib/auth/policy";
 import { homePathForRole, type ProfileRole } from "@/lib/auth/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+async function appOrigin() {
+  const headerStore = await headers();
+  const host =
+    headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "localhost:3000";
+  const proto =
+    headerStore.get("x-forwarded-proto") ??
+    (host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https");
+
+  return `${proto}://${host}`;
+}
+
 export type AuthActionState = {
   error?: string;
+  fieldErrors?: {
+    password?: string;
+    password_confirm?: string;
+  };
+  values?: {
+    full_name?: string;
+    email?: string;
+    password?: string;
+    password_confirm?: string;
+    role?: string;
+  };
+  /** Remonta o formulário após erro da action para reaplicar defaultValue. */
+  resetKey?: string;
 };
+
+function signupValues(
+  fullName: string,
+  email: string,
+  password: string,
+  passwordConfirm: string,
+  role: string,
+): NonNullable<AuthActionState["values"]> {
+  return {
+    full_name: fullName,
+    email,
+    password,
+    password_confirm: passwordConfirm,
+    role,
+  };
+}
+
+function errorState(
+  values: NonNullable<AuthActionState["values"]>,
+  payload: Pick<AuthActionState, "error" | "fieldErrors">,
+): AuthActionState {
+  return {
+    ...payload,
+    values,
+    resetKey: `${Date.now()}`,
+  };
+}
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -45,29 +98,48 @@ export async function signUpAction(
   const fullName = value(formData, "full_name");
   const email = value(formData, "email");
   const password = value(formData, "password");
+  const passwordConfirm = value(formData, "password_confirm");
   const requestedRole = value(formData, "role");
   const adult = formData.get("is_adult") === "on";
+  const values = signupValues(
+    fullName,
+    email,
+    password,
+    passwordConfirm,
+    requestedRole,
+  );
   const eligibility = validateSignupEligibility(requestedRole, adult);
 
   if (!eligibility.ok) {
-    return { error: eligibility.error };
+    return errorState(values, { error: eligibility.error });
   }
 
   const { role } = eligibility;
 
   if (!fullName || !email || !password) {
-    return { error: "Preencha nome, e-mail e senha." };
+    return errorState(values, { error: "Preencha nome, e-mail e senha." });
   }
 
   if (password.length < 6) {
-    return { error: "A senha deve ter pelo menos 6 caracteres." };
+    return errorState(values, {
+      fieldErrors: { password: authMessageFor("password_too_short") },
+    });
+  }
+
+  const confirmation = validatePasswordConfirmation(password, passwordConfirm);
+  if (!confirmation.ok) {
+    return errorState(values, {
+      fieldErrors: { password_confirm: confirmation.error },
+    });
   }
 
   const supabase = await createClient();
+  const emailRedirectTo = `${await appOrigin()}/auth/callback`;
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
+      emailRedirectTo,
       data: {
         full_name: fullName,
         role,
@@ -80,7 +152,7 @@ export async function signUpAction(
       code: error.code,
       status: error.status,
     });
-    return { error: authMessageFor("signup_failed") };
+    return errorState(values, { error: authMessageFor("signup_failed") });
   }
 
   // Em confirmação de e-mail, cadastro repetido pode devolver um usuário

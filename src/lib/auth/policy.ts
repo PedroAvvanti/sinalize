@@ -3,12 +3,16 @@ import { homePathForRole, type ProfileRole } from "./roles";
 type AuthMessageCode =
   | "adult_required"
   | "invalid_public_role"
+  | "password_mismatch"
+  | "password_too_short"
   | "profile_unavailable"
   | "signup_failed";
 
 const AUTH_MESSAGES: Record<AuthMessageCode, string> = {
   adult_required: "É preciso ter 18 anos ou mais.",
   invalid_public_role: "Escolha um tipo de conta válido.",
+  password_mismatch: "As senhas não coincidem.",
+  password_too_short: "A senha deve ter pelo menos 6 caracteres.",
   profile_unavailable:
     "Sua sessão foi encerrada. Entre novamente ou crie uma conta para continuar.",
   signup_failed:
@@ -40,6 +44,17 @@ export function validateSignupEligibility(
   }
 
   return { ok: true, role };
+}
+
+export function validatePasswordConfirmation(
+  password: string,
+  passwordConfirm: string,
+): { ok: true } | { ok: false; error: string } {
+  if (password !== passwordConfirm) {
+    return { ok: false, error: authMessageFor("password_mismatch") };
+  }
+
+  return { ok: true };
 }
 
 export function resolvePostLoginPath(

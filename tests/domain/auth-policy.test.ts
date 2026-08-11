@@ -6,6 +6,7 @@ import {
   loginMessageForError,
   profileUnavailableLoginPath,
   resolvePostLoginPath,
+  validatePasswordConfirmation,
   validateSignupEligibility,
 } from "../../src/lib/auth/policy";
 
@@ -72,10 +73,37 @@ describe("validateSignupEligibility", () => {
   });
 });
 
+describe("validatePasswordConfirmation", () => {
+  it("aceita senhas iguais", () => {
+    expect(validatePasswordConfirmation("segredo1", "segredo1")).toEqual({
+      ok: true,
+    });
+  });
+
+  it("rejeita senhas diferentes", () => {
+    expect(validatePasswordConfirmation("segredo1", "segredo2")).toEqual({
+      ok: false,
+      error: "As senhas não coincidem.",
+    });
+  });
+});
+
 describe("mensagens públicas de autenticação", () => {
   it("não expõe o erro interno do provedor no cadastro", () => {
     expect(authMessageFor("signup_failed")).toBe(
       "Não foi possível criar sua conta. Tente novamente mais tarde.",
+    );
+  });
+
+  it("explica quando a confirmação de senha falha", () => {
+    expect(authMessageFor("password_mismatch")).toBe(
+      "As senhas não coincidem.",
+    );
+  });
+
+  it("explica quando a senha é curta demais", () => {
+    expect(authMessageFor("password_too_short")).toBe(
+      "A senha deve ter pelo menos 6 caracteres.",
     );
   });
 

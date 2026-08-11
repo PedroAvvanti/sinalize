@@ -1,11 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, type FormEvent } from "react";
 import { useFormStatus } from "react-dom";
 
 import { signUpAction, type AuthActionState } from "@/actions/auth";
+import { PasswordField } from "@/components/auth/PasswordField";
+import { authMessageFor } from "@/lib/auth/policy";
 
 const INITIAL_STATE: AuthActionState = {};
+const PASSWORD_MISMATCH = authMessageFor("password_mismatch");
+const PASSWORD_TOO_SHORT = authMessageFor("password_too_short");
+const MIN_PASSWORD_LENGTH = 6;
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -19,9 +24,59 @@ function SubmitButton() {
 
 export function SignupForm() {
   const [state, formAction] = useActionState(signUpAction, INITIAL_STATE);
+  const [passwordTooShort, setPasswordTooShort] = useState(false);
+  const [passwordMismatch, setPasswordMismatch] = useState(false);
+
+  const passwordError = passwordTooShort
+    ? PASSWORD_TOO_SHORT
+    : state.fieldErrors?.password;
+  const confirmError = passwordMismatch
+    ? PASSWORD_MISMATCH
+    : state.fieldErrors?.password_confirm;
+  const formError =
+    state.error && !state.fieldErrors?.password && !state.fieldErrors?.password_confirm
+      ? state.error
+      : null;
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    const formData = new FormData(event.currentTarget);
+    const password = String(formData.get("password") ?? "");
+    const passwordConfirm = String(formData.get("password_confirm") ?? "");
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      event.preventDefault();
+      setPasswordTooShort(true);
+      setPasswordMismatch(false);
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      event.preventDefault();
+      setPasswordTooShort(false);
+      setPasswordMismatch(true);
+      return;
+    }
+
+    setPasswordTooShort(false);
+    setPasswordMismatch(false);
+  }
+
+  function clearPasswordErrors() {
+    if (passwordTooShort) {
+      setPasswordTooShort(false);
+    }
+    if (passwordMismatch) {
+      setPasswordMismatch(false);
+    }
+  }
 
   return (
-    <form className="auth-form" action={formAction}>
+    <form
+      key={state.resetKey ?? "signup"}
+      className="auth-form"
+      action={formAction}
+      onSubmit={handleSubmit}
+    >
       <div className="auth-field">
         <label htmlFor="full_name">Nome completo</label>
         <input
@@ -29,6 +84,7 @@ export function SignupForm() {
           name="full_name"
           type="text"
           autoComplete="name"
+          defaultValue={state.values?.full_name}
           required
         />
       </div>
@@ -40,23 +96,30 @@ export function SignupForm() {
           name="email"
           type="email"
           autoComplete="email"
+          defaultValue={state.values?.email}
           required
         />
       </div>
 
-      <div className="auth-field">
-        <label htmlFor="password">Senha</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          minLength={6}
-          aria-describedby="password-help"
-          required
-        />
-        <span id="password-help">Use pelo menos 6 caracteres.</span>
-      </div>
+      <PasswordField
+        id="password"
+        name="password"
+        label="Senha"
+        describedBy="password-help"
+        help="Use pelo menos 6 caracteres."
+        error={passwordError}
+        defaultValue={state.values?.password}
+        onChange={clearPasswordErrors}
+      />
+
+      <PasswordField
+        id="password_confirm"
+        name="password_confirm"
+        label="Confirmar senha"
+        error={confirmError}
+        defaultValue={state.values?.password_confirm}
+        onChange={clearPasswordErrors}
+      />
 
       <fieldset className="auth-role-group">
         <legend className="auth-role-group__legend">
@@ -65,7 +128,12 @@ export function SignupForm() {
         </legend>
 
         <label className="auth-role-card auth-role-card--user">
-          <input type="radio" name="role" value="user" defaultChecked />
+          <input
+            type="radio"
+            name="role"
+            value="user"
+            defaultChecked={(state.values?.role ?? "user") === "user"}
+          />
           <span className="auth-role-card__badge">Usuário</span>
           <span className="auth-role-card__title">Preciso de intérprete</span>
           <span className="auth-role-card__desc">
@@ -74,7 +142,12 @@ export function SignupForm() {
         </label>
 
         <label className="auth-role-card auth-role-card--interpreter">
-          <input type="radio" name="role" value="interpreter" />
+          <input
+            type="radio"
+            name="role"
+            value="interpreter"
+            defaultChecked={state.values?.role === "interpreter"}
+          />
           <span className="auth-role-card__badge">Profissional</span>
           <span className="auth-role-card__title">Sou intérprete de Libras</span>
           <span className="auth-role-card__desc">
@@ -99,9 +172,9 @@ export function SignupForm() {
         </label>
       </div>
 
-      {state.error ? (
+      {formError ? (
         <p className="auth-error auth-error-ios" role="alert" aria-live="polite">
-          {state.error}
+          {formError}
         </p>
       ) : null}
 

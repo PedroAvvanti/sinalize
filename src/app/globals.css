@@ -1001,6 +1001,57 @@ footer {
   font-size: 0.84rem;
 }
 
+.auth-field-error {
+  color: var(--color-danger) !important;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.auth-field--invalid .auth-password-input input {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 45%, transparent);
+}
+
+.auth-password-input {
+  position: relative;
+}
+
+.auth-password-input input {
+  padding-right: 52px;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.auth-password-toggle:hover {
+  color: var(--color-ink);
+}
+
+.auth-password-toggle:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.auth-password-toggle svg {
+  width: 22px;
+  height: 22px;
+}
+
 .auth-role-group {
   display: grid;
   gap: 12px;
@@ -1246,6 +1297,28 @@ footer {
   letter-spacing: 0.01em;
 }
 
+.auth-shell-ios .auth-password-input input {
+  padding-right: 54px;
+}
+
+.auth-shell-ios .auth-password-toggle {
+  right: 8px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  color: color-mix(in srgb, var(--color-primary) 45%, var(--color-muted));
+}
+
+.auth-shell-ios .auth-password-toggle:hover {
+  color: color-mix(in srgb, var(--color-primary) 70%, var(--color-ink));
+  background: color-mix(in srgb, var(--color-muted) 8%, transparent);
+}
+
+.auth-shell-ios .auth-password-toggle:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
+  outline-offset: 1px;
+}
+
 [data-theme="dark"] .auth-shell-ios .auth-field input {
   background: color-mix(in srgb, var(--color-ink) 8%, var(--color-surface));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-muted) 18%, transparent);
@@ -1268,6 +1341,16 @@ footer {
   font-weight: 400;
   line-height: 1.45;
   color: var(--color-muted);
+}
+
+.auth-shell-ios .auth-field-error {
+  font-family: var(--font-ui), var(--font-display);
+  font-weight: 600;
+  color: var(--color-danger);
+}
+
+.auth-shell-ios .auth-field--invalid .auth-password-input input {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 40%, transparent);
 }
 
 .auth-shell-ios .auth-role-group {
