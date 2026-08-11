@@ -3072,17 +3072,18 @@ footer {
   letter-spacing: 0.01em;
 }
 
+/* Light: darkened vs #eef2f8 for WCAG AA (~4.5:1); dark overrides below unchanged */
 .request-status-badge-open {
-  color: var(--color-primary);
+  color: #0558c4;
 }
 
 .request-status-badge-accepted,
 .request-status-badge-completed {
-  color: #1f9d55;
+  color: #157a3f;
 }
 
 .request-status-badge-cancel_requested {
-  color: #d97706;
+  color: #a34e08;
 }
 
 .request-status-badge-cancelled,
