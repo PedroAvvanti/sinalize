@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 
+import { SmoothScrollProvider } from "@/components/layout/SmoothScrollProvider";
+
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -55,10 +57,12 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body>
-        <a className="skip-link" href="#main-content">
-          Ir para o conteúdo principal
-        </a>
-        <div id="main-content">{children}</div>
+        <SmoothScrollProvider>
+          <a className="skip-link" href="#main-content">
+            Ir para o conteúdo principal
+          </a>
+          <div id="main-content">{children}</div>
+        </SmoothScrollProvider>
       </body>
     </html>
   );

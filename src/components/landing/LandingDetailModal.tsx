@@ -1,5 +1,6 @@
 "use client";
 
+import { useLenis } from "lenis/react";
 import { useEffect, useRef } from "react";
 
 type LandingDetailModalProps = {
@@ -18,10 +19,12 @@ export function LandingDetailModal({
   onClose,
 }: LandingDetailModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const lenis = useLenis();
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    lenis?.stop();
     closeButtonRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -34,9 +37,10 @@ export function LandingDetailModal({
 
     return () => {
       document.body.style.overflow = previousOverflow;
+      lenis?.start();
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose]);
+  }, [lenis, onClose]);
 
   return (
     <div
@@ -46,6 +50,7 @@ export function LandingDetailModal({
     >
       <div
         className="landing-detail-dialog"
+        data-lenis-prevent
         role="dialog"
         aria-modal="true"
         aria-labelledby="landing-detail-title"
