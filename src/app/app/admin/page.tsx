@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { DecisionMark } from "@/components/admin/DecisionMark";
 import { createClient } from "@/lib/supabase/server";
 
 function formatPending(count: number) {
@@ -12,14 +13,18 @@ function formatActive(count: number) {
 
 function formatAttentionLead(count: number) {
   if (count === 0) {
-    return "Nenhuma pendência no momento. Acompanhe o andamento do MVP.";
+    return "Nenhuma pendência no momento. Acompanhe a operação abaixo.";
   }
 
   if (count === 1) {
-    return "1 item aguardando decisão. Revise as filas abaixo.";
+    return "1 item aguardando decisão. Comece pela fila com atenção.";
   }
 
-  return `${count} itens aguardando decisão. Revise as filas abaixo.`;
+  return `${count} itens aguardando decisão. Comece pelas filas abaixo.`;
+}
+
+function heroTitle(attentionTotal: number) {
+  return attentionTotal > 0 ? "Há decisões na mesa." : "Mesa em dia.";
 }
 
 export default async function AdminHomePage() {
@@ -54,8 +59,28 @@ export default async function AdminHomePage() {
   const openCount = openAppointments ?? 0;
   const confirmedCount = confirmedAppointments ?? 0;
   const attentionTotal = applicationsCount + cancellationsCount;
+  const activeTotal = openCount + confirmedCount;
 
-  const metrics = [
+  const decisions = [
+    {
+      href: "/app/admin/interpreters",
+      title: "Candidaturas",
+      description: "Aprovar ou recusar intérpretes que se candidataram.",
+      countLabel: formatPending(applicationsCount),
+      count: applicationsCount,
+      hasAttention: applicationsCount > 0,
+    },
+    {
+      href: "/app/admin/cancellations",
+      title: "Cancelamentos",
+      description: "Avaliar pedidos de cancelamento de atendimentos.",
+      countLabel: formatPending(cancellationsCount),
+      count: cancellationsCount,
+      hasAttention: cancellationsCount > 0,
+    },
+  ] as const;
+
+  const tower = [
     {
       key: "applications",
       label: "Candidaturas",
@@ -86,83 +111,113 @@ export default async function AdminHomePage() {
     },
   ] as const;
 
-  const queues = [
-    {
-      href: "/app/admin/interpreters",
-      title: "Revisar candidaturas",
-      description: "Aprovar ou recusar intérpretes que se candidataram.",
-      countLabel: formatPending(applicationsCount),
-      hasAttention: applicationsCount > 0,
-    },
-    {
-      href: "/app/admin/cancellations",
-      title: "Decidir cancelamentos",
-      description: "Avaliar pedidos de cancelamento de atendimentos.",
-      countLabel: formatPending(cancellationsCount),
-      hasAttention: cancellationsCount > 0,
-    },
-    {
-      href: "/app/admin/appointments",
-      title: "Visão geral de atendimentos",
-      description: "Acompanhar status, horários e participantes.",
-      countLabel: formatActive(openCount + confirmedCount),
-      hasAttention: false,
-    },
-  ] as const;
-
   return (
-    <section className="app-panel admin-home" aria-labelledby="admin-home-title">
-      <header className="admin-home-header">
-        <p className="auth-eyebrow">Área administrativa</p>
-        <h1 id="admin-home-title">Painel administrativo</h1>
-        <p className="admin-home-lead">{formatAttentionLead(attentionTotal)}</p>
-      </header>
-
-      <section
-        className="admin-home-metrics"
-        aria-label="Resumo operacional"
-      >
-        {metrics.map((metric) => (
-          <Link
-            key={metric.key}
-            className={`admin-home-metric admin-home-metric--${metric.tone}`}
-            href={metric.href}
-          >
-            <strong>{metric.value}</strong>
-            <span>{metric.label}</span>
-          </Link>
-        ))}
+    <div className="admin-desk">
+      <section className="admin-hero" aria-labelledby="admin-home-title">
+        <DecisionMark />
+        <div className="admin-hero__copy">
+          <p className="auth-eyebrow">Mesa de decisão</p>
+          <h1 id="admin-home-title" className="admin-hero__title">
+            {heroTitle(attentionTotal)}
+          </h1>
+          <p className="admin-hero__lead">
+            {formatAttentionLead(attentionTotal)}
+          </p>
+        </div>
+        {attentionTotal > 0 ? (
+          <p className="admin-hero__status" aria-live="polite">
+            <i aria-hidden="true" />
+            {attentionTotal === 1
+              ? "1 decisão pendente"
+              : `${attentionTotal} decisões pendentes`}
+          </p>
+        ) : (
+          <p className="admin-hero__status admin-hero__status--clear">
+            <i aria-hidden="true" />
+            Operação sem filas
+          </p>
+        )}
       </section>
 
-      <section className="admin-home-queues" aria-labelledby="admin-home-queues-title">
-        <div className="admin-home-queues-heading">
-          <h2 id="admin-home-queues-title">Filas</h2>
-          <p>Atalhos para o trabalho do dia.</p>
+      <section
+        className="admin-decisions"
+        aria-labelledby="admin-decisions-title"
+      >
+        <div className="admin-section-heading">
+          <h2 id="admin-decisions-title">Filas de decisão</h2>
+          <p>O que precisa de ação agora.</p>
         </div>
 
-        <div className="admin-home-links">
-          {queues.map((queue) => (
+        <div className="admin-decision-grid">
+          {decisions.map((decision) => (
             <Link
-              key={queue.href}
+              key={decision.href}
               className={
-                queue.hasAttention
-                  ? "admin-queue-link admin-queue-link--attention"
-                  : "admin-queue-link"
+                decision.hasAttention
+                  ? "admin-decision-card admin-decision-card--attention"
+                  : "admin-decision-card"
               }
-              href={queue.href}
+              href={decision.href}
             >
-              <span className="admin-queue-link__body">
-                <span className="admin-queue-link__title">{queue.title}</span>
-                <small className="admin-queue-link__meta">
-                  {queue.countLabel}
-                </small>
-                <span className="admin-queue-link__desc">{queue.description}</span>
+              <span className="admin-decision-card__count" aria-hidden="true">
+                {decision.count}
               </span>
-              <span aria-hidden="true">→</span>
+              <span className="admin-decision-card__body">
+                <span className="admin-decision-card__title">
+                  {decision.title}
+                </span>
+                <small className="admin-decision-card__meta">
+                  {decision.countLabel}
+                </small>
+                <span className="admin-decision-card__desc">
+                  {decision.description}
+                </span>
+              </span>
+              <span className="admin-decision-card__arrow" aria-hidden="true">
+                →
+              </span>
+            </Link>
+          ))}
+
+          <Link
+            className="admin-decision-card admin-decision-card--quiet"
+            href="/app/admin/appointments"
+          >
+            <span className="admin-decision-card__body">
+              <span className="admin-decision-card__title">Atendimentos</span>
+              <small className="admin-decision-card__meta">
+                {formatActive(activeTotal)}
+              </small>
+              <span className="admin-decision-card__desc">
+                Visão geral de status, horários e participantes.
+              </span>
+            </span>
+            <span className="admin-decision-card__arrow" aria-hidden="true">
+              →
+            </span>
+          </Link>
+        </div>
+      </section>
+
+      <section className="admin-tower" aria-labelledby="admin-tower-title">
+        <div className="admin-section-heading">
+          <h2 id="admin-tower-title">Torre de controle</h2>
+          <p>Leitura rápida da operação.</p>
+        </div>
+
+        <div className="admin-tower-rail" aria-label="Resumo operacional">
+          {tower.map((metric) => (
+            <Link
+              key={metric.key}
+              className={`admin-tower-metric admin-tower-metric--${metric.tone}`}
+              href={metric.href}
+            >
+              <strong>{metric.value}</strong>
+              <span>{metric.label}</span>
             </Link>
           ))}
         </div>
       </section>
-    </section>
+    </div>
   );
 }

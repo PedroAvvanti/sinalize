@@ -56,16 +56,18 @@ export default async function AdminInterpretersPage({
     .eq("status", "pending");
 
   return (
-    <section
-      className="app-panel admin-review-page"
+    <div
+      className="admin-desk admin-desk--nested"
       aria-labelledby="admin-interpreters-title"
     >
       <AppBackLink href="/app/admin" />
-      <header className="admin-review-header">
-        <div>
+      <header className="admin-subhero">
+        <div className="admin-subhero__copy">
           <p className="auth-eyebrow">Validação profissional</p>
-          <h1 id="admin-interpreters-title">
-            {view === "history" ? "Histórico de candidaturas" : "Candidaturas pendentes"}
+          <h1 id="admin-interpreters-title" className="admin-subhero__title">
+            {view === "history"
+              ? "Histórico de candidaturas"
+              : "Candidaturas pendentes"}
           </h1>
         </div>
         {view === "pending" ? (
@@ -110,7 +112,7 @@ export default async function AdminInterpretersPage({
       ) : (
         <PendingView />
       )}
-    </section>
+    </div>
   );
 }
 

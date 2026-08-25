@@ -39,17 +39,26 @@ export default async function AdminCancellationsPage() {
 
   if (requestsError) {
     return (
-      <section
-        className="app-panel admin-review-page"
+      <div
+        className="admin-desk admin-desk--nested"
         aria-labelledby="admin-cancellations-title"
       >
         <AppBackLink href="/app/admin" />
-        <p className="auth-eyebrow">Cancelamentos</p>
-        <h1 id="admin-cancellations-title">Não foi possível carregar a fila</h1>
+        <header className="admin-subhero">
+          <div className="admin-subhero__copy">
+            <p className="auth-eyebrow">Cancelamentos</p>
+            <h1
+              id="admin-cancellations-title"
+              className="admin-subhero__title"
+            >
+              Não foi possível carregar a fila
+            </h1>
+          </div>
+        </header>
         <p className="admin-review-lead" role="alert">
           Recarregue a página em alguns instantes.
         </p>
-      </section>
+      </div>
     );
   }
 
@@ -69,19 +78,26 @@ export default async function AdminCancellationsPage() {
 
   if (appointmentsError) {
     return (
-      <section
-        className="app-panel admin-review-page"
+      <div
+        className="admin-desk admin-desk--nested"
         aria-labelledby="admin-cancellations-title"
       >
         <AppBackLink href="/app/admin" />
-        <p className="auth-eyebrow">Cancelamentos</p>
-        <h1 id="admin-cancellations-title">
-          Não foi possível carregar os atendimentos
-        </h1>
+        <header className="admin-subhero">
+          <div className="admin-subhero__copy">
+            <p className="auth-eyebrow">Cancelamentos</p>
+            <h1
+              id="admin-cancellations-title"
+              className="admin-subhero__title"
+            >
+              Não foi possível carregar os atendimentos
+            </h1>
+          </div>
+        </header>
         <p className="admin-review-lead" role="alert">
           Recarregue a página em alguns instantes.
         </p>
-      </section>
+      </div>
     );
   }
 
@@ -117,15 +133,17 @@ export default async function AdminCancellationsPage() {
   const urgentCount = cards.filter((card) => card.urgent).length;
 
   return (
-    <section
-      className="app-panel admin-review-page"
+    <div
+      className="admin-desk admin-desk--nested"
       aria-labelledby="admin-cancellations-title"
     >
       <AppBackLink href="/app/admin" />
-      <header className="admin-review-header">
-        <div>
+      <header className="admin-subhero">
+        <div className="admin-subhero__copy">
           <p className="auth-eyebrow">Cancelamentos</p>
-          <h1 id="admin-cancellations-title">Solicitações pendentes</h1>
+          <h1 id="admin-cancellations-title" className="admin-subhero__title">
+            Solicitações pendentes
+          </h1>
           <p className="admin-review-lead">
             Decisões do dia têm prioridade. Aprovar cancelamento de intérprete
             devolve o pedido à fila.
@@ -158,6 +176,6 @@ export default async function AdminCancellationsPage() {
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

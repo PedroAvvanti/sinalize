@@ -2169,208 +2169,447 @@ footer {
   }
 }
 
-.admin-queue-link {
-  display: flex;
-  min-height: 48px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  border-radius: 12px;
-  padding: 14px 18px;
-  background: var(--color-primary);
-  color: var(--color-primary-ink);
-  font-weight: 750;
-  text-decoration: none;
-  transition:
-    transform 160ms ease,
-    box-shadow 160ms ease,
-    background 160ms ease;
-}
-
-.admin-queue-link > span:last-child {
-  flex: 0 0 auto;
-  font-size: 1.25rem;
-}
-
-.admin-queue-link small {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.78rem;
-  font-weight: 650;
-  opacity: 0.9;
-}
-
-.admin-home {
+.admin-desk {
   display: grid;
-  gap: 28px;
+  gap: 36px;
 }
 
-.admin-home-header {
+.admin-desk--nested {
+  gap: 26px;
+}
+
+.admin-hero {
+  position: relative;
   display: grid;
-  gap: 8px;
+  gap: 22px;
+  overflow: hidden;
+  padding: clamp(12px, 2vw, 20px) 0 clamp(8px, 2vw, 16px);
 }
 
-.admin-home-lead {
-  max-width: 650px;
-  margin: 0;
+.admin-hero__copy,
+.admin-hero__status {
+  position: relative;
+  z-index: 1;
+}
+
+.admin-hero__title {
+  margin: 8px 0 0;
+  max-width: 14ch;
+  font-family: var(--font-accent), Georgia, serif;
+  font-size: clamp(2rem, 6vw, 2.85rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  animation: hero-rise 0.55s ease-out both;
+}
+
+.admin-hero__lead {
+  margin: 14px 0 0;
+  max-width: 40ch;
   color: var(--color-muted);
   line-height: 1.6;
+  animation: hero-rise 0.55s ease-out 0.08s both;
 }
 
-.admin-home-metrics {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+.admin-hero__status {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--color-primary);
+  font-family: var(--font-accent), Georgia, serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  animation: hero-rise 0.55s ease-out 0.14s both;
 }
 
-.admin-home-metric {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-  border-left: 3px solid color-mix(in srgb, var(--color-muted) 45%, transparent);
-  border-radius: 0 12px 12px 0;
-  padding: 12px 14px 12px 16px;
-  background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface));
-  color: inherit;
-  text-decoration: none;
-  transition:
-    background 160ms ease,
-    border-color 160ms ease,
-    transform 160ms ease;
+.admin-hero__status i {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 45%, transparent);
+  animation: admin-status-pulse 2.2s ease-out infinite;
 }
 
-.admin-home-metric strong {
-  color: var(--color-ink);
-  font-size: clamp(1.7rem, 3vw, 2.1rem);
-  font-weight: 800;
-  letter-spacing: -0.06em;
-  line-height: 1;
+.admin-hero__status--clear {
+  color: var(--color-accent-soft);
 }
 
-.admin-home-metric span {
-  color: var(--color-muted);
-  font-size: 0.72rem;
-  font-weight: 750;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.admin-hero__status--clear i {
+  background: var(--color-accent-soft);
+  box-shadow: none;
+  animation: none;
 }
 
-.admin-home-metric--attention {
-  border-left-color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
-}
-
-.admin-home-metric--attention strong {
+.decision-mark {
+  position: absolute;
+  top: -6%;
+  right: -8%;
+  z-index: 0;
+  width: min(58vw, 300px);
+  height: auto;
+  pointer-events: none;
   color: var(--color-primary);
 }
 
-.admin-home-metric:hover {
-  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
-  transform: translateY(-1px);
+.decision-mark__ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  opacity: 0.28;
+  transform-origin: 168px 88px;
+  animation: decision-ring-breathe 3.2s ease-in-out infinite;
 }
 
-.admin-home-metric:focus-visible {
-  outline: 3px solid var(--color-accent-soft);
-  outline-offset: 3px;
+.decision-mark__ring--inner {
+  stroke-width: 1.25;
+  opacity: 0.42;
+  animation-delay: 0.35s;
 }
 
-.admin-home-queues {
-  display: grid;
-  gap: 14px;
+.decision-mark__ticks {
+  stroke: var(--color-accent-soft);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.55;
 }
 
-.admin-home-queues-heading {
+.decision-mark__stroke {
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  animation: gesture-draw 1.35s ease-out 0.2s forwards;
+}
+
+@keyframes decision-ring-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.28;
+  }
+
+  50% {
+    transform: scale(1.04);
+    opacity: 0.4;
+  }
+}
+
+@keyframes admin-status-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 45%, transparent);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.admin-section-heading {
   display: grid;
   gap: 4px;
 }
 
-.admin-home-queues-heading h2 {
+.admin-section-heading h2 {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-family: var(--font-accent), Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
 }
 
-.admin-home-queues-heading p {
+.admin-section-heading p {
   margin: 0;
   color: var(--color-muted);
   font-size: 0.92rem;
   line-height: 1.45;
 }
 
-.admin-home-links {
+.admin-decisions {
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
-.admin-home-links .admin-queue-link {
-  margin-top: 0;
-  min-height: 72px;
-  align-items: flex-start;
-  padding: 16px 18px;
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-primary) 18%, transparent);
+.admin-decision-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
-.admin-queue-link__body {
+.admin-decision-card {
+  position: relative;
   display: grid;
-  gap: 4px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  min-height: 132px;
+  border-left: 3px solid color-mix(in srgb, var(--color-muted) 40%, transparent);
+  border-radius: 0 4px 18px 0;
+  padding: 20px 18px 20px 20px;
+  background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+  animation: hero-rise 0.55s ease-out 0.12s both;
+}
+
+.admin-decision-card:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.admin-decision-card:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.admin-decision-card--attention {
+  border-left-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.admin-decision-card--quiet {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 0;
+  border-left-color: color-mix(in srgb, var(--color-accent-soft) 55%, transparent);
+  background: transparent;
+  padding-block: 16px;
+}
+
+.admin-decision-card__count {
+  font-family: var(--font-accent), Georgia, serif;
+  font-size: clamp(2.4rem, 5vw, 3.1rem);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+  color: var(--color-ink);
+}
+
+.admin-decision-card--attention .admin-decision-card__count {
+  color: var(--color-primary);
+}
+
+.admin-decision-card__body {
+  display: grid;
+  gap: 6px;
   min-width: 0;
+  padding-top: 4px;
 }
 
-.admin-queue-link__title {
-  font-size: 1rem;
-  line-height: 1.3;
+.admin-decision-card__title {
+  font-family: var(--font-accent), Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 }
 
-.admin-queue-link__meta {
-  margin-top: 0;
-  opacity: 0.92;
+.admin-decision-card__meta {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.admin-queue-link__desc {
-  max-width: 42ch;
-  color: color-mix(in srgb, var(--color-primary-ink) 82%, transparent);
-  font-size: 0.84rem;
-  font-weight: 550;
-  line-height: 1.4;
+.admin-decision-card__desc {
+  max-width: 36ch;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
-.admin-queue-link--attention {
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--color-accent-soft) 55%, transparent),
-    0 12px 28px color-mix(in srgb, var(--color-primary) 24%, transparent);
+.admin-decision-card__arrow {
+  align-self: center;
+  color: var(--color-primary);
+  font-size: 1.35rem;
+  transition: transform 180ms ease;
 }
 
-.admin-home-links .admin-queue-link:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 30px color-mix(in srgb, var(--color-primary) 26%, transparent);
+.admin-decision-card:hover {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  transform: translateX(3px);
 }
 
-.admin-queue-link:focus-visible {
+.admin-decision-card:hover .admin-decision-card__arrow {
+  transform: translateX(4px);
+}
+
+.admin-decision-card:focus-visible {
   outline: 3px solid var(--color-accent-soft);
   outline-offset: 3px;
 }
 
+.admin-tower {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-tower-rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-muted) 22%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-muted) 22%, transparent);
+}
+
+.admin-tower-metric {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 18px 16px;
+  color: inherit;
+  text-decoration: none;
+  transition: background 160ms ease;
+}
+
+.admin-tower-metric:not(:last-child) {
+  border-right: 1px solid color-mix(in srgb, var(--color-muted) 18%, transparent);
+}
+
+.admin-tower-metric strong {
+  font-family: var(--font-accent), Georgia, serif;
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  color: var(--color-ink);
+}
+
+.admin-tower-metric span {
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-tower-metric--attention strong {
+  color: var(--color-primary);
+}
+
+.admin-tower-metric:hover {
+  background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+
+.admin-tower-metric:focus-visible {
+  outline: 3px solid var(--color-accent-soft);
+  outline-offset: -3px;
+}
+
+.admin-subhero {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.admin-subhero__copy {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-subhero__title {
+  margin: 0;
+  max-width: 16ch;
+  font-family: var(--font-accent), Georgia, serif;
+  font-size: clamp(1.75rem, 4.5vw, 2.35rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  animation: hero-rise 0.5s ease-out both;
+}
+
 @media (max-width: 820px) {
-  .admin-home-metrics {
+  .admin-decision-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-decision-card--quiet {
+    grid-column: auto;
+  }
+
+  .admin-tower-rail {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-tower-metric:nth-child(2) {
+    border-right: 0;
+  }
+
+  .admin-tower-metric:nth-child(1),
+  .admin-tower-metric:nth-child(2) {
+    border-bottom: 1px solid color-mix(in srgb, var(--color-muted) 18%, transparent);
   }
 }
 
 @media (max-width: 480px) {
-  .admin-home-metrics {
+  .admin-tower-rail {
     grid-template-columns: 1fr;
+  }
+
+  .admin-tower-metric {
+    border-right: 0 !important;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-muted) 18%, transparent);
+  }
+
+  .admin-tower-metric:last-child {
+    border-bottom: 0;
+  }
+
+  .admin-decision-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .admin-decision-card__count {
+    grid-column: 1 / -1;
+  }
+
+  .admin-subhero {
+    align-items: start;
+    flex-direction: column;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .admin-queue-link,
-  .admin-home-metric {
+  .admin-hero__title,
+  .admin-hero__lead,
+  .admin-hero__status,
+  .admin-subhero__title,
+  .admin-decision-card,
+  .decision-mark__ring,
+  .decision-mark__stroke,
+  .admin-hero__status i {
+    animation: none;
+  }
+
+  .decision-mark__stroke {
+    stroke-dashoffset: 0;
+  }
+
+  .admin-decision-card,
+  .admin-tower-metric {
     transition: none;
   }
 
-  .admin-home-metric:hover,
-  .admin-home-links .admin-queue-link:hover {
+  .admin-decision-card:hover {
+    transform: none;
+  }
+
+  .admin-decision-card:hover .admin-decision-card__arrow {
     transform: none;
   }
 }
@@ -2397,7 +2636,9 @@ footer {
 
 .pending-count strong {
   color: var(--color-primary);
-  font-size: 2.1rem;
+  font-family: var(--font-accent), Georgia, serif;
+  font-size: 2.35rem;
+  font-weight: 600;
   letter-spacing: -0.06em;
   line-height: 1;
 }
@@ -2424,15 +2665,16 @@ footer {
 .cancellation-review-card {
   display: grid;
   gap: 18px;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 16%, transparent);
-  border-radius: 16px;
-  padding: clamp(20px, 3vw, 26px);
-  background: color-mix(in srgb, var(--color-primary) 3%, var(--color-surface));
+  border: none;
+  border-left: 3px solid var(--color-primary);
+  border-radius: 0 4px 16px 0;
+  padding: clamp(20px, 3vw, 26px) clamp(18px, 3vw, 24px);
+  background: color-mix(in srgb, var(--color-primary) 5%, transparent);
 }
 
 .cancellation-review-card-urgent {
-  border-color: color-mix(in srgb, #d97706 45%, transparent);
-  background: color-mix(in srgb, #d97706 6%, var(--color-surface));
+  border-left-color: #d97706;
+  background: color-mix(in srgb, #d97706 7%, transparent);
 }
 
 .cancellation-review-card__header {
@@ -2485,34 +2727,38 @@ footer {
 .admin-review-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-muted) 22%, transparent);
 }
 
 .admin-review-tab {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border-radius: 12px;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
   padding: 10px 14px;
-  background: color-mix(in srgb, var(--color-muted) 8%, var(--color-surface));
+  background: transparent;
   color: var(--color-muted);
   font-size: 0.92rem;
   font-weight: 750;
   text-decoration: none;
   transition:
-    background 160ms ease,
-    color 160ms ease;
+    color 160ms ease,
+    border-color 160ms ease;
 }
 
 .admin-review-tab:hover {
-  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+  background: transparent;
   color: var(--color-ink);
 }
 
 .admin-review-tab--active {
-  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  border-bottom-color: var(--color-primary);
+  background: transparent;
   color: var(--color-primary);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 28%, transparent);
+  box-shadow: none;
 }
 
 .admin-review-tab:focus-visible {
@@ -2546,20 +2792,21 @@ footer {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  border: 1px solid color-mix(in srgb, var(--color-muted) 20%, transparent);
-  border-radius: 12px;
+  border: none;
+  border-left: 3px solid color-mix(in srgb, var(--color-muted) 35%, transparent);
+  border-radius: 0 4px 14px 0;
   padding: 14px 16px;
-  background: color-mix(in srgb, var(--color-primary) 2%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-primary) 2%, transparent);
 }
 
 .admin-application-history__item--approved {
-  border-color: color-mix(in srgb, #157a3f 35%, transparent);
-  background: color-mix(in srgb, #157a3f 8%, var(--color-surface));
+  border-left-color: #157a3f;
+  background: color-mix(in srgb, #157a3f 8%, transparent);
 }
 
 .admin-application-history__item--rejected {
-  border-color: color-mix(in srgb, var(--color-danger) 38%, transparent);
-  background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+  border-left-color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
 }
 
 .admin-application-history__main {
@@ -2570,7 +2817,10 @@ footer {
 
 .admin-application-history__name {
   margin: 0;
-  font-weight: 750;
+  font-family: var(--font-accent), Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .admin-application-history__main time,
@@ -2597,9 +2847,9 @@ footer {
   display: grid;
   grid-template-columns: 10px minmax(0, 1fr);
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 17%, transparent);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--color-primary) 2%, var(--color-surface));
+  border: none;
+  border-radius: 0 4px 16px 0;
+  background: color-mix(in srgb, var(--color-primary) 5%, transparent);
 }
 
 .review-card-signal {
@@ -2645,6 +2895,8 @@ footer {
 .review-card-heading h2,
 .admin-review-empty h2 {
   margin: 0;
+  font-family: var(--font-accent), Georgia, serif;
+  font-weight: 600;
   letter-spacing: -0.035em;
 }
 
@@ -2767,10 +3019,11 @@ footer {
   grid-template-columns: 22px minmax(0, 1fr);
   align-items: start;
   gap: 16px;
-  border: 1px solid color-mix(in srgb, var(--color-accent-soft) 26%, transparent);
-  border-radius: 16px;
-  padding: 24px;
-  background: color-mix(in srgb, var(--color-accent-soft) 6%, var(--color-surface));
+  border: none;
+  border-left: 3px solid var(--color-accent-soft);
+  border-radius: 0 4px 14px 0;
+  padding: 22px 8px 22px 18px;
+  background: color-mix(in srgb, var(--color-accent-soft) 7%, transparent);
 }
 
 .status-signal {
@@ -2787,6 +3040,11 @@ footer {
   color: var(--color-accent-soft);
 }
 
+.admin-review-empty h2 {
+  font-family: var(--font-accent), Georgia, serif;
+  font-weight: 600;
+}
+
 .admin-review-empty p {
   margin: 7px 0 0;
   color: var(--color-muted);
@@ -2794,6 +3052,7 @@ footer {
 
 @media (max-width: 620px) {
   .admin-review-header,
+  .admin-subhero,
   .review-card-heading {
     align-items: start;
     flex-direction: column;
@@ -4269,11 +4528,26 @@ footer {
   padding: 14px 16px;
 }
 
+.admin-appointments-list__item {
+  border: none;
+  border-left: 3px solid color-mix(in srgb, var(--color-muted) 35%, transparent);
+  border-radius: 0 4px 14px 0;
+  padding: 16px 16px 16px 18px;
+  background: color-mix(in srgb, var(--color-primary) 4%, transparent);
+}
+
 .history-list__reason,
 .agenda-list__reason,
 .admin-appointments-list__reason {
   margin: 0 0 4px;
   font-weight: 750;
+}
+
+.admin-appointments-list__reason {
+  font-family: var(--font-accent), Georgia, serif;
+  font-size: 1.08rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .history-list__duration,

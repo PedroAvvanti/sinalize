@@ -70,17 +70,21 @@ export default async function AdminAppointmentsPage() {
   );
 
   return (
-    <section
-      className="app-panel admin-appointments-page"
+    <div
+      className="admin-desk admin-desk--nested admin-appointments-page"
       aria-labelledby="admin-appointments-title"
     >
       <AppBackLink href="/app/admin" label="Voltar ao painel" />
-      <header className="admin-appointments-page__header">
-        <p className="auth-eyebrow">Atendimentos</p>
-        <h1 id="admin-appointments-title">Visão geral</h1>
-        <p className="admin-appointments-page__lead">
-          Acompanhe os últimos atendimentos e seus estados.
-        </p>
+      <header className="admin-subhero">
+        <div className="admin-subhero__copy">
+          <p className="auth-eyebrow">Torre de controle</p>
+          <h1 id="admin-appointments-title" className="admin-subhero__title">
+            Visão geral
+          </h1>
+          <p className="admin-appointments-page__lead">
+            Acompanhe os últimos atendimentos e seus estados.
+          </p>
+        </div>
       </header>
 
       {appointmentsError ? (
@@ -127,6 +131,6 @@ export default async function AdminAppointmentsPage() {
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }
