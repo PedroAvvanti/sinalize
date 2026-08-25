@@ -101,20 +101,27 @@ export function OpenRequestsList({
 
       {appointments.length === 0 ? (
         <div className="open-requests__empty" role="status">
-          <span aria-hidden="true">✓</span>
           <h2>Nenhum pedido aguardando</h2>
           <p>Novos atendimentos aparecerão aqui automaticamente.</p>
         </div>
       ) : (
-        <div className="open-requests__grid">
-          {appointments.map((appointment) => (
-            <OpenRequestCard
-              key={appointment.id}
-              appointment={appointment}
-              onAccepted={removeAppointment}
-            />
-          ))}
-        </div>
+        <>
+          <p className="open-requests__count" aria-live="polite">
+            {appointments.length === 1
+              ? "1 pedido na fila"
+              : `${appointments.length} pedidos na fila`}
+          </p>
+          <ul className="open-requests__list">
+            {appointments.map((appointment) => (
+              <li key={appointment.id}>
+                <OpenRequestCard
+                  appointment={appointment}
+                  onAccepted={removeAppointment}
+                />
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );

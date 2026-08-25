@@ -12,7 +12,7 @@ type OpenRequestCardProps = {
 };
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
-  dateStyle: "medium",
+  dateStyle: "full",
   timeStyle: "short",
 });
 
@@ -59,16 +59,22 @@ export function OpenRequestCard({
     <article className="open-request-card">
       <div className="open-request-card__header">
         <div>
-          <p className="open-request-card__label">Atendimento solicitado</p>
+          <p className="open-request-card__label">Pedido disponível</p>
           <h2>{reason}</h2>
         </div>
-        <span>{appointment.duration_minutes} min</span>
+        <span className="open-request-card__duration">
+          {appointment.duration_minutes} min
+        </span>
       </div>
 
       <dl className="open-request-card__details">
         <div>
           <dt>Quando</dt>
-          <dd>{dateFormatter.format(new Date(appointment.scheduled_at))}</dd>
+          <dd>
+            <time dateTime={appointment.scheduled_at}>
+              {dateFormatter.format(new Date(appointment.scheduled_at))}
+            </time>
+          </dd>
         </div>
         {appointment.reason_text ? (
           <div>
@@ -85,12 +91,13 @@ export function OpenRequestCard({
       ) : null}
 
       <button
-        className="auth-submit"
+        className="user-request-link open-request-card__accept"
         type="button"
         disabled={isPending}
         onClick={acceptRequest}
       >
         {isPending ? "Confirmando…" : "Aceitar atendimento"}
+        {!isPending ? <span aria-hidden="true">→</span> : null}
       </button>
     </article>
   );

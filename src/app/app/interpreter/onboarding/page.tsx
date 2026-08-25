@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { CertificateUpload } from "@/components/interpreters/CertificateUpload";
+import { LivePulse } from "@/components/interpreters/LivePulse";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { resolveApplicationView } from "@/lib/interpreters/application";
 import { createClient } from "@/lib/supabase/server";
@@ -16,7 +17,7 @@ export default async function InterpreterOnboardingPage() {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, full_name")
     .eq("id", userId)
     .single();
 
@@ -39,14 +40,24 @@ export default async function InterpreterOnboardingPage() {
 
   if (applicationError) {
     return (
-      <section className="app-panel onboarding-panel" aria-labelledby="title">
-        <p className="auth-eyebrow">Validação profissional</p>
-        <h1 id="title">Não foi possível consultar sua candidatura</h1>
-        <p className="onboarding-lead" role="alert">
-          Tente recarregar esta página em alguns instantes. Nenhum novo envio
-          foi solicitado.
-        </p>
-      </section>
+      <div className="interpreter-desk">
+        <section
+          className="interpreter-hero interpreter-hero--compact"
+          aria-labelledby="title"
+        >
+          <LivePulse />
+          <div className="interpreter-hero__copy">
+            <p className="auth-eyebrow">Validação profissional</p>
+            <h1 id="title" className="interpreter-hero__title">
+              Não foi possível consultar sua candidatura
+            </h1>
+            <p className="interpreter-hero__lead" role="alert">
+              Tente recarregar esta página em alguns instantes. Nenhum novo
+              envio foi solicitado.
+            </p>
+          </div>
+        </section>
+      </div>
     );
   }
 
@@ -56,56 +67,97 @@ export default async function InterpreterOnboardingPage() {
     redirect("/app/interpreter");
   }
 
+  const titles = {
+    upload: "Confirme sua atuação em Libras",
+    pending: "Seu certificado está em análise",
+    rejected: "Revise seu certificado",
+  } as const;
+
+  const leads = {
+    upload:
+      "Envie um documento que comprove sua qualificação. O arquivo fica privado e só é usado na análise.",
+    pending:
+      "Você não precisa enviar outro arquivo. Assim que a análise terminar, a área do intérprete libera.",
+    rejected:
+      "O documento enviado não pôde ser validado. Ajuste e reenvie para continuar.",
+  } as const;
+
+  const stepIndex = view === "upload" ? 0 : view === "pending" ? 1 : 1;
+
   return (
-    <section className="app-panel onboarding-panel" aria-labelledby="title">
-      <div className="onboarding-heading">
-        <div>
+    <div className="interpreter-desk">
+      <section
+        className="interpreter-hero interpreter-hero--compact"
+        aria-labelledby="title"
+      >
+        <LivePulse />
+        <div className="interpreter-hero__copy">
           <p className="auth-eyebrow">Validação profissional</p>
-          <h1 id="title">
-            {view === "upload"
-              ? "Confirme sua atuação em Libras"
-              : view === "pending"
-                ? "Seu certificado está em análise"
-                : "Revise seu certificado"}
+          <h1 id="title" className="interpreter-hero__title">
+            {titles[view]}
           </h1>
+          <p className="interpreter-hero__lead">{leads[view]}</p>
         </div>
-        <ol className="application-steps" aria-label="Etapas da candidatura">
-          <li data-active={view === "upload"}>Envio</li>
-          <li data-active={view === "pending"}>Análise</li>
-          <li>Aprovação</li>
-        </ol>
-      </div>
+      </section>
+
+      <ol className="application-rail" aria-label="Etapas da candidatura">
+        <li data-state={stepIndex === 0 ? "current" : "done"}>
+          <span className="application-rail__index" aria-hidden="true">
+            1
+          </span>
+          <span>Envio</span>
+        </li>
+        <li
+          data-state={
+            stepIndex === 1
+              ? view === "rejected"
+                ? "attention"
+                : "current"
+              : stepIndex > 1
+                ? "done"
+                : "todo"
+          }
+        >
+          <span className="application-rail__index" aria-hidden="true">
+            2
+          </span>
+          <span>Análise</span>
+        </li>
+        <li data-state="todo">
+          <span className="application-rail__index" aria-hidden="true">
+            3
+          </span>
+          <span>Aprovação</span>
+        </li>
+      </ol>
 
       {view === "upload" ? (
-        <div className="onboarding-content">
-          <p className="onboarding-lead">
-            Para acessar a área do intérprete, envie um documento que comprove
-            sua qualificação. O arquivo fica privado e será usado somente na
-            análise da candidatura.
-          </p>
+        <div className="onboarding-stage">
           <CertificateUpload />
         </div>
       ) : null}
 
       {view === "pending" ? (
-        <div className="application-status application-status-pending">
-          <span className="status-signal" aria-hidden="true" />
+        <div className="application-signal application-signal--pending">
+          <span className="application-signal__pulse" aria-hidden="true" />
           <div>
             <h2>Análise em andamento</h2>
             <p>
-              Você não precisa enviar outro arquivo. Assim que a análise for
-              concluída, o acesso à área do intérprete será liberado.
+              Fique de olho nas notificações. Assim que a equipe concluir a
+              revisão, o acesso será liberado automaticamente.
             </p>
           </div>
         </div>
       ) : null}
 
       {view === "rejected" ? (
-        <div className="onboarding-content">
-          <div className="application-status application-status-rejected">
-            <span className="status-signal" aria-hidden="true" />
+        <div className="onboarding-stage">
+          <div className="application-signal application-signal--rejected">
+            <span className="application-signal__mark" aria-hidden="true">
+              !
+            </span>
             <div>
-              <h2>O certificado precisa ser reenviado</h2>
+              <h2>Reenvio necessário</h2>
               <p>
                 <strong>Motivo:</strong>{" "}
                 {application?.rejection_reason ??
@@ -116,6 +168,6 @@ export default async function InterpreterOnboardingPage() {
           <CertificateUpload resubmission />
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }

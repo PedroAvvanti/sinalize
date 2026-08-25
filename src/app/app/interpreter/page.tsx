@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { expireStaleAppointments } from "@/actions/appointments";
 import { OpenRequestsList } from "@/components/appointments/OpenRequestsList";
+import { LivePulse } from "@/components/interpreters/LivePulse";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function InterpreterHomePage() {
@@ -18,7 +19,11 @@ export default async function InterpreterHomePage() {
     { data: profile, error: profileError },
     { data: application, error: applicationError },
   ] = await Promise.all([
-    supabase.from("profiles").select("role").eq("id", userId).single(),
+    supabase
+      .from("profiles")
+      .select("role, full_name")
+      .eq("id", userId)
+      .single(),
     supabase
       .from("interpreter_applications")
       .select("status")
@@ -48,30 +53,37 @@ export default async function InterpreterHomePage() {
     .eq("status", "open")
     .order("scheduled_at", { ascending: true });
 
+  const greeting = profile.full_name?.trim()
+    ? `Olá, ${profile.full_name.trim()}.`
+    : "Olá.";
+
   return (
-    <section
-      className="app-panel interpreter-queue"
-      aria-labelledby="interpreter-home-title"
-    >
-      <header className="interpreter-queue__header">
-        <div>
+    <div className="interpreter-desk">
+      <section
+        className="interpreter-hero"
+        aria-labelledby="interpreter-home-title"
+      >
+        <LivePulse />
+        <div className="interpreter-hero__copy">
           <p className="auth-eyebrow">Fila ao vivo</p>
-          <h1 id="interpreter-home-title">Pedidos disponíveis</h1>
-          <p>
+          <h1 id="interpreter-home-title" className="interpreter-hero__title">
+            {greeting}
+          </h1>
+          <p className="interpreter-hero__lead">
             Escolha um atendimento. A fila se atualiza quando outro intérprete
             aceita um pedido.
           </p>
         </div>
-        <div className="interpreter-queue__actions">
+        <div className="interpreter-hero__meta">
           <Link className="next-call-secondary" href="/app/interpreter/agenda">
             Ver agenda
           </Link>
-          <span className="interpreter-queue__live">
+          <span className="interpreter-live" aria-live="polite">
             <i aria-hidden="true" />
-            Atualização em tempo real
+            Ao vivo
           </span>
         </div>
-      </header>
+      </section>
 
       <OpenRequestsList
         initialAppointments={appointments ?? []}
@@ -81,6 +93,6 @@ export default async function InterpreterHomePage() {
             : undefined
         }
       />
-    </section>
+    </div>
   );
 }
