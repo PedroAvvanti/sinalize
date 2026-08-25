@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   assertRejectionReason,
+  applicationDecisionLabel,
   REJECTION_REASON_MAX_LENGTH,
   rejectionReasonForDecision,
+  resolveInterpreterReviewView,
   sanitizeRejectionReason,
 } from "../../src/lib/domain/interpreters";
 
@@ -75,5 +77,31 @@ describe("rejectionReasonForDecision", () => {
     expect(() =>
       rejectionReasonForDecision("rejected", "\u0000\u0007  "),
     ).toThrow("Informe o motivo da rejeição.");
+  });
+});
+
+describe("resolveInterpreterReviewView", () => {
+  it("usa pendentes por padrão", () => {
+    expect(resolveInterpreterReviewView(undefined)).toBe("pending");
+    expect(resolveInterpreterReviewView(null)).toBe("pending");
+    expect(resolveInterpreterReviewView("")).toBe("pending");
+  });
+
+  it("aceita history", () => {
+    expect(resolveInterpreterReviewView("history")).toBe("history");
+  });
+
+  it("ignora valores desconhecidos", () => {
+    expect(resolveInterpreterReviewView("foo")).toBe("pending");
+    expect(resolveInterpreterReviewView(["history", "pending"])).toBe(
+      "pending",
+    );
+  });
+});
+
+describe("applicationDecisionLabel", () => {
+  it("rotula decisões conhecidas", () => {
+    expect(applicationDecisionLabel("approved")).toBe("Aprovado");
+    expect(applicationDecisionLabel("rejected")).toBe("Recusado");
   });
 });

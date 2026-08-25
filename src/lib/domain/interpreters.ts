@@ -1,6 +1,25 @@
 export type InterpreterApplicationDecision = "approved" | "rejected";
 
+export type InterpreterReviewView = "pending" | "history";
+
 export const REJECTION_REASON_MAX_LENGTH = 500;
+export const INTERPRETER_HISTORY_LIMIT = 50;
+
+export function resolveInterpreterReviewView(
+  value: string | string[] | null | undefined,
+): InterpreterReviewView {
+  if (value === "history") {
+    return "history";
+  }
+
+  return "pending";
+}
+
+export function applicationDecisionLabel(
+  decision: InterpreterApplicationDecision,
+): string {
+  return decision === "approved" ? "Aprovado" : "Recusado";
+}
 
 /** Remove caracteres de controle; preserva newline e tab. */
 export function sanitizeRejectionReason(raw: string): string {
