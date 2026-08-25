@@ -31,6 +31,20 @@ function isInterpreterPath(pathname: string) {
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
+  const { pathname, search } = request.nextUrl;
+
+  // Link de confirmação pode cair na landing com ?code=; encaminha ao callback.
+  if (
+    pathname !== "/auth/callback" &&
+    (request.nextUrl.searchParams.has("code") ||
+      request.nextUrl.searchParams.has("token_hash"))
+  ) {
+    const callbackUrl = new URL("/auth/callback", request.url);
+    request.nextUrl.searchParams.forEach((value, key) => {
+      callbackUrl.searchParams.set(key, value);
+    });
+    return NextResponse.redirect(callbackUrl);
+  }
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -57,7 +71,6 @@ export async function proxy(request: NextRequest) {
 
   const { data: claimsData } = await supabase.auth.getClaims();
   const userId = claimsData?.claims.sub;
-  const { pathname, search } = request.nextUrl;
 
   if (!userId && isAppPath(pathname)) {
     const loginUrl = new URL("/login", request.url);
@@ -149,5 +162,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/login", "/signup", "/confirm"],
+  matcher: ["/", "/app/:path*", "/login", "/signup", "/confirm"],
 };

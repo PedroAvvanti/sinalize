@@ -1,7 +1,17 @@
-import { NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
-import { decideProfileAccess } from "@/lib/auth/policy";
-import { createClient } from "@/lib/supabase/server";
+import {
+  parseEmailConfirmParams,
+  resolveEmailConfirmDestination,
+} from "@/lib/auth/email-confirm";
+import type { Database } from "@/types/database";
+
+type CookieToSet = {
+  name: string;
+  value: string;
+  options?: Parameters<NextResponse["cookies"]["set"]>[2];
+};
 
 function redirectOrigin(requestUrl: URL, request: Request) {
   const forwardedHost = request.headers.get("x-forwarded-host");
@@ -18,24 +28,61 @@ function redirectOrigin(requestUrl: URL, request: Request) {
   return requestUrl.origin;
 }
 
-export async function GET(request: Request) {
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get("code");
-  const origin = redirectOrigin(requestUrl, request);
+function redirectWithCookies(origin: string, path: string, cookies: CookieToSet[]) {
+  const response = NextResponse.redirect(`${origin}${path}`);
 
-  if (!code) {
+  cookies.forEach(({ name, value, options }) => {
+    response.cookies.set(name, value, options);
+  });
+
+  return response;
+}
+
+export async function GET(request: NextRequest) {
+  const requestUrl = new URL(request.url);
+  const origin = redirectOrigin(requestUrl, request);
+  const confirmParams = parseEmailConfirmParams(requestUrl.searchParams);
+
+  if (confirmParams.kind === "invalid") {
     return NextResponse.redirect(`${origin}/login`);
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const cookiesToSet: CookieToSet[] = [];
 
-  if (error) {
-    console.error("Falha ao trocar código de confirmação por sessão.", {
-      code: error.code,
-      status: error.status,
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookies) {
+          cookies.forEach((cookie) => {
+            cookiesToSet.push(cookie);
+          });
+        },
+      },
+    },
+  );
+
+  const exchangeError =
+    confirmParams.kind === "token_hash"
+      ? (
+          await supabase.auth.verifyOtp({
+            type: confirmParams.type,
+            token_hash: confirmParams.token_hash,
+          })
+        ).error
+      : (await supabase.auth.exchangeCodeForSession(confirmParams.code)).error;
+
+  if (exchangeError) {
+    console.error("Falha ao confirmar e-mail e criar sessão.", {
+      code: exchangeError.code,
+      status: exchangeError.status,
+      kind: confirmParams.kind,
     });
-    return NextResponse.redirect(`${origin}/login`);
+    return redirectWithCookies(origin, "/login", cookiesToSet);
   }
 
   const {
@@ -43,7 +90,7 @@ export async function GET(request: Request) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.redirect(`${origin}/login`);
+    return redirectWithCookies(origin, "/login", cookiesToSet);
   }
 
   const { data: profile, error: profileError } = await supabase
@@ -52,16 +99,14 @@ export async function GET(request: Request) {
     .eq("id", user.id)
     .maybeSingle();
 
-  const access = decideProfileAccess(profile?.role, Boolean(profileError));
+  const destination = resolveEmailConfirmDestination(
+    profile?.role,
+    Boolean(profileError),
+  );
 
-  if (access.kind === "authenticated") {
-    return NextResponse.redirect(`${origin}${access.destination}`);
-  }
-
-  if (access.kind === "recover") {
+  if (destination.startsWith("/login")) {
     await supabase.auth.signOut();
-    return NextResponse.redirect(`${origin}${access.destination}`);
   }
 
-  return NextResponse.redirect(`${origin}/app`);
+  return redirectWithCookies(origin, destination, cookiesToSet);
 }

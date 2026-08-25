@@ -1,32 +1,56 @@
 "use client";
 
-import { useActionState, useState, type FormEvent } from "react";
-import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
 
-import { signUpAction, type AuthActionState } from "@/actions/auth";
+import { finalizeSignupRoleAction } from "@/actions/auth";
 import { PasswordField } from "@/components/auth/PasswordField";
-import { authMessageFor } from "@/lib/auth/policy";
+import {
+  authMessageFor,
+  validatePasswordConfirmation,
+  validateSignupEligibility,
+} from "@/lib/auth/policy";
+import { homePathForRole, type ProfileRole } from "@/lib/auth/roles";
+import { createClient } from "@/lib/supabase/client";
 
-const INITIAL_STATE: AuthActionState = {};
 const PASSWORD_MISMATCH = authMessageFor("password_mismatch");
 const PASSWORD_TOO_SHORT = authMessageFor("password_too_short");
 const MIN_PASSWORD_LENGTH = 6;
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+type FormValues = {
+  full_name: string;
+  email: string;
+  password: string;
+  password_confirm: string;
+  role: string;
+};
 
-  return (
-    <button className="auth-submit" type="submit" disabled={pending}>
-      {pending ? "Criando conta…" : "Criar conta"}
-    </button>
-  );
-}
+type FormState = {
+  error?: string;
+  fieldErrors?: {
+    password?: string;
+    password_confirm?: string;
+  };
+  values?: FormValues;
+  resetKey?: string;
+};
+
+const INITIAL_VALUES: FormValues = {
+  full_name: "",
+  email: "",
+  password: "",
+  password_confirm: "",
+  role: "user",
+};
 
 export function SignupForm() {
-  const [state, formAction] = useActionState(signUpAction, INITIAL_STATE);
+  const router = useRouter();
+  const [state, setState] = useState<FormState>({});
+  const [pending, setPending] = useState(false);
   const [passwordTooShort, setPasswordTooShort] = useState(false);
   const [passwordMismatch, setPasswordMismatch] = useState(false);
 
+  const values = state.values ?? INITIAL_VALUES;
   const passwordError = passwordTooShort
     ? PASSWORD_TOO_SHORT
     : state.fieldErrors?.password;
@@ -38,29 +62,6 @@ export function SignupForm() {
       ? state.error
       : null;
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    const formData = new FormData(event.currentTarget);
-    const password = String(formData.get("password") ?? "");
-    const passwordConfirm = String(formData.get("password_confirm") ?? "");
-
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      event.preventDefault();
-      setPasswordTooShort(true);
-      setPasswordMismatch(false);
-      return;
-    }
-
-    if (password !== passwordConfirm) {
-      event.preventDefault();
-      setPasswordTooShort(false);
-      setPasswordMismatch(true);
-      return;
-    }
-
-    setPasswordTooShort(false);
-    setPasswordMismatch(false);
-  }
-
   function clearPasswordErrors() {
     if (passwordTooShort) {
       setPasswordTooShort(false);
@@ -70,11 +71,107 @@ export function SignupForm() {
     }
   }
 
+  function fail(
+    nextValues: FormValues,
+    payload: Pick<FormState, "error" | "fieldErrors">,
+  ) {
+    setState({
+      ...payload,
+      values: nextValues,
+      resetKey: `${Date.now()}`,
+    });
+    setPending(false);
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const fullName = String(formData.get("full_name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+    const passwordConfirm = String(formData.get("password_confirm") ?? "");
+    const requestedRole = String(formData.get("role") ?? "").trim();
+    const adult = formData.get("is_adult") === "on";
+    const nextValues: FormValues = {
+      full_name: fullName,
+      email,
+      password,
+      password_confirm: passwordConfirm,
+      role: requestedRole,
+    };
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setPasswordTooShort(true);
+      setPasswordMismatch(false);
+      return;
+    }
+
+    const confirmation = validatePasswordConfirmation(password, passwordConfirm);
+    if (!confirmation.ok) {
+      setPasswordTooShort(false);
+      setPasswordMismatch(true);
+      return;
+    }
+
+    setPasswordTooShort(false);
+    setPasswordMismatch(false);
+
+    const eligibility = validateSignupEligibility(requestedRole, adult);
+    if (!eligibility.ok) {
+      fail(nextValues, { error: eligibility.error });
+      return;
+    }
+
+    if (!fullName || !email || !password) {
+      fail(nextValues, { error: "Preencha nome, e-mail e senha." });
+      return;
+    }
+
+    const role = eligibility.role as Exclude<ProfileRole, "admin">;
+    setPending(true);
+    setState({ values: nextValues });
+
+    const supabase = createClient();
+    const emailRedirectTo = `${window.location.origin}/auth/callback`;
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo,
+        data: {
+          full_name: fullName,
+          role,
+        },
+      },
+    });
+
+    if (error) {
+      console.error("Falha no cadastro pelo provedor de autenticação.", {
+        code: error.code,
+        status: error.status,
+      });
+      fail(nextValues, { error: authMessageFor("signup_failed") });
+      return;
+    }
+
+    // Cadastro repetido pode devolver usuário ofuscado sem identities.
+    if (data.user?.identities?.length) {
+      await finalizeSignupRoleAction(data.user.id, role);
+    }
+
+    if (data.session) {
+      router.replace(homePathForRole(role));
+      return;
+    }
+
+    router.replace("/confirm");
+  }
+
   return (
     <form
       key={state.resetKey ?? "signup"}
       className="auth-form"
-      action={formAction}
       onSubmit={handleSubmit}
     >
       <div className="auth-field">
@@ -84,7 +181,7 @@ export function SignupForm() {
           name="full_name"
           type="text"
           autoComplete="name"
-          defaultValue={state.values?.full_name}
+          defaultValue={values.full_name}
           required
         />
       </div>
@@ -96,7 +193,7 @@ export function SignupForm() {
           name="email"
           type="email"
           autoComplete="email"
-          defaultValue={state.values?.email}
+          defaultValue={values.email}
           required
         />
       </div>
@@ -108,7 +205,7 @@ export function SignupForm() {
         describedBy="password-help"
         help="Use pelo menos 6 caracteres."
         error={passwordError}
-        defaultValue={state.values?.password}
+        defaultValue={values.password}
         onChange={clearPasswordErrors}
       />
 
@@ -117,7 +214,7 @@ export function SignupForm() {
         name="password_confirm"
         label="Confirmar senha"
         error={confirmError}
-        defaultValue={state.values?.password_confirm}
+        defaultValue={values.password_confirm}
         onChange={clearPasswordErrors}
       />
 
@@ -132,7 +229,7 @@ export function SignupForm() {
             type="radio"
             name="role"
             value="user"
-            defaultChecked={(state.values?.role ?? "user") === "user"}
+            defaultChecked={(values.role || "user") === "user"}
           />
           <span className="auth-role-card__badge">Usuário</span>
           <span className="auth-role-card__title">Preciso de intérprete</span>
@@ -146,7 +243,7 @@ export function SignupForm() {
             type="radio"
             name="role"
             value="interpreter"
-            defaultChecked={state.values?.role === "interpreter"}
+            defaultChecked={values.role === "interpreter"}
           />
           <span className="auth-role-card__badge">Profissional</span>
           <span className="auth-role-card__title">Sou intérprete de Libras</span>
@@ -178,7 +275,9 @@ export function SignupForm() {
         </p>
       ) : null}
 
-      <SubmitButton />
+      <button className="auth-submit" type="submit" disabled={pending}>
+        {pending ? "Criando conta…" : "Criar conta"}
+      </button>
     </form>
   );
 }

@@ -1,58 +1,46 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
-
-import { decideProfileAccess } from "@/lib/auth/policy";
-import { createClient } from "@/lib/supabase/client";
 
 const POLL_MS = 2000;
 
+type SessionHomeResponse = {
+  destination: string | null;
+};
+
 export function ConfirmSessionRedirect() {
-  const router = useRouter();
   const redirecting = useRef(false);
 
   useEffect(() => {
-    const supabase = createClient();
-
     async function goHomeIfSignedIn() {
       if (redirecting.current) {
         return;
       }
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      try {
+        const response = await fetch("/auth/session-home", {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
 
-      if (!session?.user) {
-        return;
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as SessionHomeResponse;
+
+        if (!data.destination) {
+          return;
+        }
+
+        redirecting.current = true;
+        window.location.assign(data.destination);
+      } catch {
+        // Falhas transitórias de rede: o próximo poll tenta de novo.
       }
-
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      const access = decideProfileAccess(profile?.role, Boolean(profileError));
-
-      if (access.kind !== "authenticated") {
-        return;
-      }
-
-      redirecting.current = true;
-      router.replace(access.destination);
     }
 
     void goHomeIfSignedIn();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        void goHomeIfSignedIn();
-      }
-    });
 
     const onVisible = () => {
       if (document.visibilityState === "visible") {
@@ -67,12 +55,11 @@ export function ConfirmSessionRedirect() {
     }, POLL_MS);
 
     return () => {
-      subscription.unsubscribe();
       window.removeEventListener("focus", goHomeIfSignedIn);
       document.removeEventListener("visibilitychange", onVisible);
       window.clearInterval(intervalId);
     };
-  }, [router]);
+  }, []);
 
   return null;
 }
