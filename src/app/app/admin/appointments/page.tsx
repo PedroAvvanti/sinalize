@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { AppBackLink } from "@/components/navigation/AppBackLink";
 import { APPOINTMENT_REASONS } from "@/lib/domain/reasons";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { createClient } from "@/lib/supabase/server";
@@ -74,6 +74,7 @@ export default async function AdminAppointmentsPage() {
       className="app-panel admin-appointments-page"
       aria-labelledby="admin-appointments-title"
     >
+      <AppBackLink href="/app/admin" label="Voltar ao painel" />
       <header className="admin-appointments-page__header">
         <p className="auth-eyebrow">Atendimentos</p>
         <h1 id="admin-appointments-title">Visão geral</h1>
@@ -119,13 +120,13 @@ export default async function AdminAppointmentsPage() {
         </ul>
       ) : (
         <div className="admin-review-empty" role="status">
-          <p>Nenhum atendimento registrado ainda.</p>
+          <span className="status-signal" aria-hidden="true" />
+          <div>
+            <h2>Sem atendimentos</h2>
+            <p>Nenhum atendimento registrado ainda.</p>
+          </div>
         </div>
       )}
-
-      <Link className="next-call-secondary" href="/app/admin">
-        Voltar ao painel
-      </Link>
     </section>
   );
 }
