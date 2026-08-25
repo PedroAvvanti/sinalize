@@ -53,7 +53,7 @@ export default async function AppLayout({
       <div className="app-shell">
         <header className="app-header">
           <div className="brand">
-            <Image src="/logo.png" alt="" width={48} height={48} priority />
+            <Image src="/logo.png" alt="" width={64} height={64} priority />
             <span>Sinalize</span>
           </div>
           <div className="app-account">
