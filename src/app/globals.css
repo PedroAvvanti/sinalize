@@ -774,6 +774,7 @@ footer {
   .button,
   .auth-submit,
   .auth-back,
+  .app-back,
   .landing-step-button,
   .landing-card-button {
     transition: none;
@@ -782,6 +783,7 @@ footer {
   .button:hover,
   .auth-submit:hover:not(:disabled),
   .auth-back:hover,
+  .app-back:hover,
   .landing-step-button:hover,
   .landing-card-button:hover {
     transform: none;
@@ -1237,6 +1239,39 @@ footer {
 }
 
 .auth-back:focus-visible {
+  outline: 3px solid var(--color-accent-soft);
+  outline-offset: 3px;
+}
+
+.app-back {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  text-decoration: none;
+  transition:
+    transform 160ms ease,
+    background 160ms ease;
+}
+
+.app-back svg {
+  width: 20px;
+  height: 20px;
+}
+
+.app-back:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+}
+
+.app-back:active {
+  transform: translateY(0);
+}
+
+.app-back:focus-visible {
   outline: 3px solid var(--color-accent-soft);
   outline-offset: 3px;
 }

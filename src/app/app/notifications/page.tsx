@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { listNotifications } from "@/actions/notifications";
 import { NotificationsList } from "@/components/notifications/NotificationsList";
+import { AppBackLink } from "@/components/navigation/AppBackLink";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { createClient } from "@/lib/supabase/server";
 
@@ -28,6 +29,7 @@ export default async function NotificationsPage() {
 
   return (
     <section className="app-panel notifications-page" aria-labelledby="notifications-title">
+      <AppBackLink href={`/app/${profile.role}`} />
       <p className="auth-eyebrow">Atualizações</p>
       <h1 id="notifications-title">Notificações</h1>
       <p className="notifications-lead">

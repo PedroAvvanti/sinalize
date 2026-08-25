@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { CancellationDecisionCard } from "@/components/admin/CancellationDecisionCard";
+import { AppBackLink } from "@/components/navigation/AppBackLink";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { isCancellationScheduledToday } from "@/lib/domain/cancellations";
 import { createClient } from "@/lib/supabase/server";
@@ -42,6 +43,7 @@ export default async function AdminCancellationsPage() {
         className="app-panel admin-review-page"
         aria-labelledby="admin-cancellations-title"
       >
+        <AppBackLink href="/app/admin" />
         <p className="auth-eyebrow">Cancelamentos</p>
         <h1 id="admin-cancellations-title">Não foi possível carregar a fila</h1>
         <p className="admin-review-lead" role="alert">
@@ -71,6 +73,7 @@ export default async function AdminCancellationsPage() {
         className="app-panel admin-review-page"
         aria-labelledby="admin-cancellations-title"
       >
+        <AppBackLink href="/app/admin" />
         <p className="auth-eyebrow">Cancelamentos</p>
         <h1 id="admin-cancellations-title">
           Não foi possível carregar os atendimentos
@@ -118,6 +121,7 @@ export default async function AdminCancellationsPage() {
       className="app-panel admin-review-page"
       aria-labelledby="admin-cancellations-title"
     >
+      <AppBackLink href="/app/admin" />
       <header className="admin-review-header">
         <div>
           <p className="auth-eyebrow">Cancelamentos</p>

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { InterpreterReviewCard } from "@/components/admin/InterpreterReviewCard";
+import { AppBackLink } from "@/components/navigation/AppBackLink";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,6 +43,7 @@ export default async function AdminInterpretersPage() {
         className="app-panel admin-review-page"
         aria-labelledby="admin-interpreters-title"
       >
+        <AppBackLink href="/app/admin" />
         <p className="auth-eyebrow">Validação profissional</p>
         <h1 id="admin-interpreters-title">Não foi possível carregar a fila</h1>
         <p className="admin-review-lead" role="alert">
@@ -70,6 +72,7 @@ export default async function AdminInterpretersPage() {
         className="app-panel admin-review-page"
         aria-labelledby="admin-interpreters-title"
       >
+        <AppBackLink href="/app/admin" />
         <p className="auth-eyebrow">Validação profissional</p>
         <h1 id="admin-interpreters-title">
           Não foi possível identificar os candidatos
@@ -117,6 +120,7 @@ export default async function AdminInterpretersPage() {
       className="app-panel admin-review-page"
       aria-labelledby="admin-interpreters-title"
     >
+      <AppBackLink href="/app/admin" />
       <header className="admin-review-header">
         <div>
           <p className="auth-eyebrow">Validação profissional</p>
