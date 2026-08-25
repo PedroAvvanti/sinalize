@@ -3646,7 +3646,8 @@ footer {
 }
 
 .user-shell,
-.interpreter-shell {
+.interpreter-shell,
+.admin-shell {
   display: grid;
   gap: 24px;
   padding-bottom: 88px;
@@ -4064,9 +4065,9 @@ footer {
   justify-items: center;
   gap: 2px;
   border-radius: 10px;
-  padding: 8px 6px;
+  padding: 8px 4px;
   color: var(--color-muted);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 750;
   text-align: center;
   text-decoration: none;

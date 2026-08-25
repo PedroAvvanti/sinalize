@@ -2,9 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { signOutAction } from "@/actions/auth";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { getInitials } from "@/lib/profile/initials";
@@ -40,14 +38,14 @@ export default async function AppLayout({
     .eq("profile_id", userId)
     .is("read_at", null);
 
-  const usesAppTabs =
-    profile.role === "user" || profile.role === "interpreter";
   const avatarHref =
     profile.role === "user"
       ? "/app/user/profile"
       : profile.role === "interpreter"
         ? "/app/interpreter/profile"
-        : `/app/${profile.role}`;
+        : profile.role === "admin"
+          ? "/app/admin/profile"
+          : `/app/${profile.role}`;
   const initials = getInitials(profile.full_name ?? "");
 
   return (
@@ -65,16 +63,6 @@ export default async function AppLayout({
               userId={userId}
               initialUnread={unreadNotifications ?? 0}
             />
-            {!usesAppTabs ? (
-              <>
-                <ThemeToggle />
-                <form action={signOutAction}>
-                  <button className="app-signout" type="submit">
-                    Sair
-                  </button>
-                </form>
-              </>
-            ) : null}
             <Link
               className="app-avatar-link"
               href={avatarHref}

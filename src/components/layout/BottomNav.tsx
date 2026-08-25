@@ -80,3 +80,11 @@ export const INTERPRETER_BOTTOM_NAV_ITEMS: BottomNavItem[] = [
   { href: "/app/interpreter/agenda", label: "Agenda" },
   { href: "/app/interpreter/profile", label: "Perfil" },
 ];
+
+export const ADMIN_BOTTOM_NAV_ITEMS: BottomNavItem[] = [
+  { href: "/app/admin", label: "Mesa", end: true },
+  { href: "/app/admin/interpreters", label: "Candidatos" },
+  { href: "/app/admin/cancellations", label: "Cancel." },
+  { href: "/app/admin/appointments", label: "Atend." },
+  { href: "/app/admin/profile", label: "Perfil" },
+];
