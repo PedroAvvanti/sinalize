@@ -3645,7 +3645,8 @@ footer {
   }
 }
 
-.user-shell {
+.user-shell,
+.interpreter-shell {
   display: grid;
   gap: 24px;
   padding-bottom: 88px;
@@ -4051,7 +4052,6 @@ footer {
 
 .bottom-nav ul {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 4px;
   max-width: 720px;
   margin: 0 auto;

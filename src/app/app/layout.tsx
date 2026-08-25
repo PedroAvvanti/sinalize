@@ -40,10 +40,14 @@ export default async function AppLayout({
     .eq("profile_id", userId)
     .is("read_at", null);
 
-  const isUser = profile.role === "user";
-  const avatarHref = isUser
-    ? "/app/user/profile"
-    : `/app/${profile.role}`;
+  const usesAppTabs =
+    profile.role === "user" || profile.role === "interpreter";
+  const avatarHref =
+    profile.role === "user"
+      ? "/app/user/profile"
+      : profile.role === "interpreter"
+        ? "/app/interpreter/profile"
+        : `/app/${profile.role}`;
   const initials = getInitials(profile.full_name ?? "");
 
   return (
@@ -61,7 +65,7 @@ export default async function AppLayout({
               userId={userId}
               initialUnread={unreadNotifications ?? 0}
             />
-            {!isUser ? (
+            {!usesAppTabs ? (
               <>
                 <ThemeToggle />
                 <form action={signOutAction}>
@@ -74,9 +78,7 @@ export default async function AppLayout({
             <Link
               className="app-avatar-link"
               href={avatarHref}
-              aria-label={
-                isUser ? "Abrir perfil" : "Ir para a página inicial"
-              }
+              aria-label="Abrir perfil"
             >
               {initials}
             </Link>

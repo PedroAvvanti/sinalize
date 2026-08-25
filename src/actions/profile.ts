@@ -99,6 +99,7 @@ export async function updateProfileAction(
   }
 
   revalidatePath("/app/user/profile");
+  revalidatePath("/app/interpreter/profile");
   revalidatePath("/app/interpreter");
   revalidatePath("/app/admin");
   return { ok: true };

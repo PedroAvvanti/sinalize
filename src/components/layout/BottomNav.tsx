@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 type BottomNavItem = {
   href: string;
   label: string;
+  /** Only match the exact path (use for role home routes). */
+  end?: boolean;
   disabled?: boolean;
 };
 
@@ -13,16 +15,26 @@ type BottomNavProps = {
   items: BottomNavItem[];
 };
 
+function isItemActive(pathname: string, item: BottomNavItem) {
+  if (item.end) {
+    return pathname === item.href;
+  }
+
+  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+}
+
 export function BottomNav({ items }: BottomNavProps) {
   const pathname = usePathname();
 
   return (
     <nav className="bottom-nav" aria-label="Navegação principal">
-      <ul>
+      <ul
+        style={{
+          gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
+        }}
+      >
         {items.map((item) => {
-          const active =
-            pathname === item.href ||
-            (item.href !== "/app/user" && pathname.startsWith(item.href));
+          const active = isItemActive(pathname, item);
 
           if (item.disabled) {
             return (
@@ -57,8 +69,14 @@ export function BottomNav({ items }: BottomNavProps) {
 }
 
 export const USER_BOTTOM_NAV_ITEMS: BottomNavItem[] = [
-  { href: "/app/user", label: "Início" },
+  { href: "/app/user", label: "Início", end: true },
   { href: "/app/user/request", label: "Pedidos" },
   { href: "/app/user/history", label: "Histórico" },
   { href: "/app/user/profile", label: "Perfil" },
+];
+
+export const INTERPRETER_BOTTOM_NAV_ITEMS: BottomNavItem[] = [
+  { href: "/app/interpreter", label: "Fila", end: true },
+  { href: "/app/interpreter/agenda", label: "Agenda" },
+  { href: "/app/interpreter/profile", label: "Perfil" },
 ];
