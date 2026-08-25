@@ -4206,11 +4206,33 @@ footer {
   position: relative;
   display: inline-grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--color-surface));
   color: var(--color-ink);
   text-decoration: none;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.notification-bell svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+}
+
+.notification-bell:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 42%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+  color: var(--color-primary);
 }
 
 .notification-bell:focus-visible {
@@ -4220,8 +4242,8 @@ footer {
 
 .notification-bell__badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: -2px;
+  right: -2px;
   min-width: 18px;
   border-radius: 999px;
   padding: 2px 5px;
