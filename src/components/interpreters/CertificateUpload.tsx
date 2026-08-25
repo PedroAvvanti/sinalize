@@ -35,11 +35,7 @@ export function CertificateUpload({
   );
 
   return (
-    <form
-      className="certificate-form"
-      action={formAction}
-      encType="multipart/form-data"
-    >
+    <form className="certificate-form" action={formAction}>
       <div className="certificate-field">
         <label htmlFor="certificate">
           {resubmission ? "Novo certificado" : "Certificado de intérprete"}
