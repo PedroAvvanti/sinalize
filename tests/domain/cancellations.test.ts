@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   canUserCancelDirectly,
+  cancellationDecisionLabel,
+  cancellationRequesterRoleLabel,
   nextAppointmentStatusAfterCancellationDecision,
+  resolveCancellationReviewView,
 } from "../../src/lib/domain/cancellations";
 
 describe("canUserCancelDirectly", () => {
@@ -42,5 +45,38 @@ describe("nextAppointmentStatusAfterCancellationDecision", () => {
     expect(
       nextAppointmentStatusAfterCancellationDecision("rejected", "user"),
     ).toEqual({ status: "accepted", clearInterpreter: false });
+  });
+});
+
+describe("resolveCancellationReviewView", () => {
+  it("usa pendentes por padrão", () => {
+    expect(resolveCancellationReviewView(undefined)).toBe("pending");
+    expect(resolveCancellationReviewView(null)).toBe("pending");
+    expect(resolveCancellationReviewView("")).toBe("pending");
+  });
+
+  it("aceita history", () => {
+    expect(resolveCancellationReviewView("history")).toBe("history");
+  });
+
+  it("ignora valores desconhecidos", () => {
+    expect(resolveCancellationReviewView("foo")).toBe("pending");
+    expect(resolveCancellationReviewView(["history", "pending"])).toBe(
+      "pending",
+    );
+  });
+});
+
+describe("cancellationDecisionLabel", () => {
+  it("rotula decisões conhecidas", () => {
+    expect(cancellationDecisionLabel("approved")).toBe("Aprovado");
+    expect(cancellationDecisionLabel("rejected")).toBe("Recusado");
+  });
+});
+
+describe("cancellationRequesterRoleLabel", () => {
+  it("rotula o papel de quem pediu", () => {
+    expect(cancellationRequesterRoleLabel("user")).toBe("Usuário");
+    expect(cancellationRequesterRoleLabel("interpreter")).toBe("Intérprete");
   });
 });

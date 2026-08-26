@@ -33,6 +33,32 @@ export type CancellationDecision = "approved" | "rejected";
 
 export type CancellationRequesterRole = "user" | "interpreter";
 
+export type CancellationReviewView = "pending" | "history";
+
+export const CANCELLATION_HISTORY_LIMIT = 50;
+
+export function resolveCancellationReviewView(
+  value: string | string[] | null | undefined,
+): CancellationReviewView {
+  if (value === "history") {
+    return "history";
+  }
+
+  return "pending";
+}
+
+export function cancellationDecisionLabel(
+  decision: CancellationDecision,
+): string {
+  return decision === "approved" ? "Aprovado" : "Recusado";
+}
+
+export function cancellationRequesterRoleLabel(
+  role: CancellationRequesterRole,
+): string {
+  return role === "interpreter" ? "Intérprete" : "Usuário";
+}
+
 export type AppointmentTransitionAfterDecision = {
   status: "open" | "accepted" | "cancelled";
   clearInterpreter: boolean;
