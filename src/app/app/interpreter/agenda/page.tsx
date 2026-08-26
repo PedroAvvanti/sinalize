@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { expireStaleAppointments } from "@/actions/appointments";
 import { WeekStrip } from "@/components/appointments/WeekStrip";
 import { AppBackLink } from "@/components/navigation/AppBackLink";
-import { APPOINTMENT_REASONS } from "@/lib/domain/reasons";
+import { appointmentReasonDisplayLabel } from "@/lib/domain/reasons";
 import { isUpcomingAppointment } from "@/lib/domain/meeting-access";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
@@ -24,16 +24,10 @@ type AgendaAppointment = Pick<
   | "scheduled_at"
   | "duration_minutes"
   | "reason_code"
+  | "reason_custom_title"
   | "reason_text"
   | "requester_id"
 >;
-
-function reasonLabel(reasonCode: string) {
-  return (
-    APPOINTMENT_REASONS.find((option) => option.value === reasonCode)?.label ??
-    "Atendimento"
-  );
-}
 
 export default async function InterpreterAgendaPage() {
   const supabase = await createClient();
@@ -74,7 +68,7 @@ export default async function InterpreterAgendaPage() {
   const { data: appointments, error: appointmentsError } = await supabase
     .from("appointments")
     .select(
-      "id, status, scheduled_at, duration_minutes, reason_code, reason_text, requester_id",
+      "id, status, scheduled_at, duration_minutes, reason_code, reason_custom_title, reason_text, requester_id",
     )
     .eq("interpreter_id", userId)
     .in("status", ["accepted", "cancel_requested"])
@@ -172,7 +166,10 @@ export default async function InterpreterAgendaPage() {
                   ) : null}
                   <h2>{displayName(appointment.requester_id)}</h2>
                   <p className="agenda-clock__reason">
-                    {reasonLabel(appointment.reason_code)}
+                    {appointmentReasonDisplayLabel(
+                      appointment.reason_code,
+                      appointment.reason_custom_title,
+                    )}
                   </p>
                   <time dateTime={appointment.scheduled_at}>
                     {dateFormatter.format(scheduledAt)}

@@ -110,6 +110,7 @@ export type Database = {
           scheduled_at: string;
           duration_minutes: 15 | 30 | 60;
           reason_code: AppointmentReasonCode;
+          reason_custom_title: string | null;
           reason_text: string | null;
           jitsi_room_name: string;
           created_at: string;
@@ -123,6 +124,7 @@ export type Database = {
           scheduled_at: string;
           duration_minutes: 15 | 30 | 60;
           reason_code: AppointmentReasonCode;
+          reason_custom_title?: string | null;
           reason_text?: string | null;
           jitsi_room_name: string;
           created_at?: string;
@@ -136,6 +138,7 @@ export type Database = {
           scheduled_at?: string;
           duration_minutes?: 15 | 30 | 60;
           reason_code?: AppointmentReasonCode;
+          reason_custom_title?: string | null;
           reason_text?: string | null;
           jitsi_room_name?: string;
           created_at?: string;

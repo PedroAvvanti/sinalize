@@ -9,17 +9,19 @@ import {
   parseScheduledAtIso,
   type AppointmentDuration,
 } from "@/lib/domain/appointments";
-import { isAppointmentReasonCode } from "@/lib/domain/reasons";
+import {
+  isAppointmentReasonCode,
+  validateAppointmentReasonFields,
+} from "@/lib/domain/reasons";
 import { appointmentEndsAt } from "@/lib/domain/meeting-access";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-
-const REASON_TEXT_MAX_LENGTH = 500;
 
 export type CreateAppointmentInput = {
   scheduledAt: string;
   durationMinutes: AppointmentDuration;
   reasonCode: string;
+  reasonCustomTitle?: string;
   reasonText?: string;
 };
 
@@ -35,7 +37,11 @@ export async function createAppointmentAction(
   input: CreateAppointmentInput,
 ): Promise<CreateAppointmentResult> {
   const scheduledAt = parseScheduledAtIso(input.scheduledAt);
-  const reasonText = input.reasonText?.trim() || null;
+  const reasonFields = validateAppointmentReasonFields({
+    reasonCode: input.reasonCode,
+    reasonCustomTitle: input.reasonCustomTitle,
+    reasonText: input.reasonText,
+  });
 
   if (
     !isValidDuration(input.durationMinutes) ||
@@ -49,10 +55,10 @@ export async function createAppointmentAction(
     };
   }
 
-  if (reasonText && reasonText.length > REASON_TEXT_MAX_LENGTH) {
+  if (!reasonFields.ok) {
     return {
       ok: false,
-      error: `Os detalhes devem ter no máximo ${REASON_TEXT_MAX_LENGTH} caracteres.`,
+      error: reasonFields.error,
     };
   }
 
@@ -88,7 +94,8 @@ export async function createAppointmentAction(
     scheduled_at: scheduledAt.toISOString(),
     duration_minutes: input.durationMinutes,
     reason_code: input.reasonCode,
-    reason_text: reasonText,
+    reason_custom_title: reasonFields.reasonCustomTitle,
+    reason_text: reasonFields.reasonText,
     jitsi_room_name: buildJitsiRoomName(appointmentId),
   });
 

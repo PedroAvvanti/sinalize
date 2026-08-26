@@ -48,7 +48,7 @@ export default async function InterpreterHomePage() {
   const { data: appointments, error: appointmentsError } = await supabase
     .from("appointments")
     .select(
-      "id, scheduled_at, duration_minutes, reason_code, reason_text",
+      "id, scheduled_at, duration_minutes, reason_code, reason_custom_title, reason_text",
     )
     .eq("status", "open")
     .order("scheduled_at", { ascending: true });

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { CancelDialog } from "@/components/appointments/CancelDialog";
 import { isWithinMeetingWindow } from "@/lib/domain/meeting-access";
-import { APPOINTMENT_REASONS } from "@/lib/domain/reasons";
+import { appointmentReasonDisplayLabel } from "@/lib/domain/reasons";
 
 export type NextCallAppointment = {
   id: string;
@@ -10,6 +10,7 @@ export type NextCallAppointment = {
   scheduled_at: string;
   duration_minutes: number;
   reason_code: string;
+  reason_custom_title: string | null;
   reason_text: string | null;
 };
 
@@ -77,10 +78,10 @@ export function NextCallHero({ appointment, requesterName }: NextCallHeroProps) 
   }
 
   const scheduledAt = new Date(appointment.scheduled_at);
-  const reason =
-    APPOINTMENT_REASONS.find((option) => option.value === appointment.reason_code)
-      ?.label ?? "Atendimento";
-  const canEnter =
+  const reason = appointmentReasonDisplayLabel(
+    appointment.reason_code,
+    appointment.reason_custom_title,
+  );  const canEnter =
     (appointment.status === "accepted" ||
       appointment.status === "cancel_requested") &&
     isWithinMeetingWindow(scheduledAt, appointment.duration_minutes);

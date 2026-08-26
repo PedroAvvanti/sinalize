@@ -1,11 +1,16 @@
 import Link from "next/link";
 
-import { APPOINTMENT_REASONS } from "@/lib/domain/reasons";
+import { appointmentReasonDisplayLabel } from "@/lib/domain/reasons";
 import type { Database } from "@/types/database";
 
 export type HistoryAppointment = Pick<
   Database["public"]["Tables"]["appointments"]["Row"],
-  "id" | "status" | "scheduled_at" | "duration_minutes" | "reason_code"
+  | "id"
+  | "status"
+  | "scheduled_at"
+  | "duration_minutes"
+  | "reason_code"
+  | "reason_custom_title"
 >;
 
 type AppointmentHistoryListProps = {
@@ -47,11 +52,10 @@ export function AppointmentHistoryList({
   return (
     <ul className="history-list">
       {appointments.map((appointment) => {
-        const reason =
-          APPOINTMENT_REASONS.find(
-            (option) => option.value === appointment.reason_code,
-          )?.label ?? "Atendimento";
-
+        const reason = appointmentReasonDisplayLabel(
+          appointment.reason_code,
+          appointment.reason_custom_title,
+        );
         return (
           <li key={appointment.id} className="history-list__item">
             <div>

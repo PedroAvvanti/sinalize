@@ -155,7 +155,9 @@ async function PendingView() {
     appointmentIds.length > 0
       ? await supabase
           .from("appointments")
-          .select("id, scheduled_at, duration_minutes, reason_code, status")
+          .select(
+            "id, scheduled_at, duration_minutes, reason_code, reason_custom_title, status",
+          )
           .in("id", appointmentIds)
           .eq("status", "cancel_requested")
       : { data: [], error: null };
@@ -190,6 +192,7 @@ async function PendingView() {
         scheduledAt: appointment.scheduled_at,
         durationMinutes: appointment.duration_minutes,
         appointmentReasonCode: appointment.reason_code,
+        appointmentReasonCustomTitle: appointment.reason_custom_title,
         urgent: isCancellationScheduledToday(
           new Date(appointment.scheduled_at),
           now,

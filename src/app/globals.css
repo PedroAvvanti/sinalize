@@ -3149,6 +3149,90 @@ footer {
   outline-offset: 2px;
 }
 
+.reason-combobox {
+  position: relative;
+  display: grid;
+}
+
+.reason-combobox input {
+  padding-right: 48px;
+}
+
+.reason-combobox__toggle {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 44px;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  border: 0;
+  border-left: 1px solid color-mix(in srgb, var(--color-muted) 38%, transparent);
+  border-radius: 0 11px 11px 0;
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface));
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.reason-combobox__toggle:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+}
+
+.reason-combobox__toggle:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
+  outline-offset: -3px;
+}
+
+.reason-combobox__toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.reason-combobox__chevron {
+  display: block;
+}
+
+.reason-combobox__menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border: 1px solid color-mix(in srgb, var(--color-muted) 38%, transparent);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: 0 12px 28px color-mix(in srgb, #000 28%, transparent);
+}
+
+.reason-combobox__option {
+  width: 100%;
+  display: block;
+  margin: 0;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.reason-combobox__option:hover,
+.reason-combobox__option:focus-visible {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  outline: none;
+}
+
+.reason-combobox__option--active {
+  font-weight: 700;
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
 .appointment-field span {
   color: var(--color-muted);
   font-size: 0.84rem;

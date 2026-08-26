@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AppBackLink } from "@/components/navigation/AppBackLink";
-import { APPOINTMENT_REASONS } from "@/lib/domain/reasons";
+import { appointmentReasonDisplayLabel } from "@/lib/domain/reasons";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { createClient } from "@/lib/supabase/server";
 
@@ -45,7 +45,7 @@ export default async function AdminAppointmentsPage() {
   const { data: appointments, error: appointmentsError } = await supabase
     .from("appointments")
     .select(
-      "id, status, scheduled_at, duration_minutes, reason_code, requester_id, interpreter_id",
+      "id, status, scheduled_at, duration_minutes, reason_code, reason_custom_title, requester_id, interpreter_id",
     )
     .order("scheduled_at", { ascending: false })
     .limit(100);
@@ -94,11 +94,10 @@ export default async function AdminAppointmentsPage() {
       ) : appointments?.length ? (
         <ul className="admin-appointments-list">
           {appointments.map((appointment) => {
-            const reason =
-              APPOINTMENT_REASONS.find(
-                (option) => option.value === appointment.reason_code,
-              )?.label ?? "Atendimento";
-
+            const reason = appointmentReasonDisplayLabel(
+              appointment.reason_code,
+              appointment.reason_custom_title,
+            );
             return (
               <li key={appointment.id} className="admin-appointments-list__item">
                 <div>

@@ -32,8 +32,9 @@ export default async function UserHistoryPage() {
 
   const { data: appointments, error: appointmentsError } = await supabase
     .from("appointments")
-    .select("id, status, scheduled_at, duration_minutes, reason_code")
-    .eq("requester_id", userId)
+    .select(
+      "id, status, scheduled_at, duration_minutes, reason_code, reason_custom_title",
+    )    .eq("requester_id", userId)
     .in("status", HISTORY_STATUSES)
     .order("scheduled_at", { ascending: false })
     .limit(50);

@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 
 import { acceptAppointmentAction } from "@/actions/appointments";
-import { APPOINTMENT_REASONS } from "@/lib/domain/reasons";
+import { appointmentReasonDisplayLabel } from "@/lib/domain/reasons";
 import type { OpenAppointment } from "@/components/appointments/OpenRequestsList";
 
 type OpenRequestCardProps = {
@@ -23,11 +23,10 @@ export function OpenRequestCard({
   const [error, setError] = useState<string>();
   const [isPending, startTransition] = useTransition();
   const acceptLockRef = useRef(false);
-  const reason =
-    APPOINTMENT_REASONS.find(
-      (option) => option.value === appointment.reason_code,
-    )?.label ?? "Outro";
-
+  const reason = appointmentReasonDisplayLabel(
+    appointment.reason_code,
+    appointment.reason_custom_title,
+  );
   function acceptRequest() {
     if (isPending || acceptLockRef.current) {
       return;

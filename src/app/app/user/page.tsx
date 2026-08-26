@@ -84,7 +84,7 @@ export default async function UserHomePage() {
     supabase
       .from("appointments")
       .select(
-        "id, status, scheduled_at, duration_minutes, reason_code, reason_text",
+        "id, status, scheduled_at, duration_minutes, reason_code, reason_custom_title, reason_text",
       )
       .eq("requester_id", userId)
       .in("status", ACTIVE_STATUSES)
@@ -98,8 +98,9 @@ export default async function UserHomePage() {
       .order("scheduled_at", { ascending: true }),
     supabase
       .from("appointments")
-      .select("id, status, scheduled_at, duration_minutes, reason_code")
-      .eq("requester_id", userId)
+      .select(
+        "id, status, scheduled_at, duration_minutes, reason_code, reason_custom_title",
+      )      .eq("requester_id", userId)
       .order("created_at", { ascending: false })
       .limit(5),
   ]);

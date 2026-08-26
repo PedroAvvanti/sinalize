@@ -12,6 +12,7 @@ export type OpenAppointment = Pick<
   | "scheduled_at"
   | "duration_minutes"
   | "reason_code"
+  | "reason_custom_title"
   | "reason_text"
 >;
 
@@ -21,7 +22,7 @@ type OpenRequestsListProps = {
 };
 
 const OPEN_APPOINTMENT_FIELDS =
-  "id, scheduled_at, duration_minutes, reason_code, reason_text";
+  "id, scheduled_at, duration_minutes, reason_code, reason_custom_title, reason_text";
 
 export function OpenRequestsList({
   initialAppointments,

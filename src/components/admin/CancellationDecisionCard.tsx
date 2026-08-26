@@ -4,7 +4,10 @@ import { useRouter } from "next/navigation";
 import { useId, useRef, useState, useTransition } from "react";
 
 import { decideCancellationAction } from "@/actions/cancellations";
-import { APPOINTMENT_REASONS, CANCEL_REASONS } from "@/lib/domain/reasons";
+import {
+  CANCEL_REASONS,
+  appointmentReasonDisplayLabel,
+} from "@/lib/domain/reasons";
 
 type CancellationDecisionCardProps = {
   request: {
@@ -16,6 +19,7 @@ type CancellationDecisionCardProps = {
     scheduledAt: string;
     durationMinutes: number;
     appointmentReasonCode: string;
+    appointmentReasonCustomTitle: string | null;
     urgent: boolean;
   };
 };
@@ -42,11 +46,10 @@ export function CancellationDecisionCard({
   const [decided, setDecided] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const appointmentReason =
-    APPOINTMENT_REASONS.find(
-      (option) => option.value === request.appointmentReasonCode,
-    )?.label ?? "Atendimento";
-  const cancelReason =
+  const appointmentReason = appointmentReasonDisplayLabel(
+    request.appointmentReasonCode,
+    request.appointmentReasonCustomTitle,
+  );  const cancelReason =
     CANCEL_REASONS.find((option) => option.value === request.reasonCode)?.label ??
     "Motivo informado";
 
