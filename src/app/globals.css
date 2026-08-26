@@ -4902,17 +4902,17 @@ footer {
   }
 }
 
-.complete-meeting {
+.leave-meeting {
   display: grid;
   gap: 8px;
   justify-items: end;
 }
 
-.complete-meeting__button {
+.leave-meeting__button {
   white-space: nowrap;
 }
 
-.complete-meeting__button:focus-visible {
+.leave-meeting__button:focus-visible {
   outline: 3px solid var(--color-accent-soft);
   outline-offset: 3px;
 }

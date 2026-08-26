@@ -14,6 +14,7 @@ import {
   validateAppointmentReasonFields,
 } from "@/lib/domain/reasons";
 import { appointmentEndsAt } from "@/lib/domain/meeting-access";
+import { canMarkAppointmentCompleted } from "@/lib/domain/meeting-leave";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -247,7 +248,13 @@ export async function completeAppointmentAction(
     return { ok: false, error: "Você não participa deste atendimento." };
   }
 
-  if (appointment.status !== "accepted") {
+  const eligibility = canMarkAppointmentCompleted(appointment.status);
+
+  if (eligibility === "already_done") {
+    return { ok: true };
+  }
+
+  if (eligibility === "blocked") {
     return {
       ok: false,
       error: "Este atendimento não pode ser encerrado agora.",
@@ -264,11 +271,28 @@ export async function completeAppointmentAction(
       .select("id")
       .maybeSingle();
 
-    if (updateError || !updated) {
+    if (updateError) {
       console.error("Não foi possível concluir o atendimento.", {
-        code: updateError?.code,
+        code: updateError.code,
         appointmentId,
       });
+      return {
+        ok: false,
+        error: "Não foi possível encerrar a chamada. Tente novamente.",
+      };
+    }
+
+    if (!updated) {
+      const { data: current } = await admin
+        .from("appointments")
+        .select("status")
+        .eq("id", appointmentId)
+        .maybeSingle();
+
+      if (current?.status === "completed") {
+        return { ok: true };
+      }
+
       return {
         ok: false,
         error: "Não foi possível encerrar a chamada. Tente novamente.",

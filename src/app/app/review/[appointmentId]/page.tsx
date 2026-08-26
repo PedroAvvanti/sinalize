@@ -101,10 +101,10 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
   const [{ data: recipient, error: recipientError }, { data: existingReview }] =
     await Promise.all([
       supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("full_name")
         .eq("id", recipientId)
-        .single(),
+        .maybeSingle(),
       supabase
         .from("reviews")
         .select("id")
@@ -158,7 +158,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
       <ReviewForm
         appointmentId={appointmentId}
         toProfileId={recipientId}
-        recipientName={recipient.full_name}
+        recipientName={recipient.full_name ?? ""}
         homeHref={homeHref}
       />
     </section>

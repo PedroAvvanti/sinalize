@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { JitsiMeetEmbed } from "@/components/meeting/JitsiMeetEmbed";
-import { CompleteMeetingButton } from "@/components/meeting/CompleteMeetingButton";
+import { LeaveMeetingButton } from "@/components/meeting/LeaveMeetingButton";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import {
   getJitsiDomain,
@@ -84,6 +84,8 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
   }
 
   const jitsiDomain = getJitsiDomain();
+  const leaveRole =
+    appointment.requester_id === userId ? "user" : "interpreter";
 
   return (
     <section className="meeting-page meeting-page-live" aria-labelledby="meeting-title">
@@ -92,12 +94,7 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
           <p className="auth-eyebrow">Videochamada</p>
           <h1 id="meeting-title">Sala de atendimento</h1>
         </div>
-        <Link className="next-call-secondary" href={`/app/${profile.role}`}>
-          Sair da sala
-        </Link>
-        {appointment.status === "accepted" ? (
-          <CompleteMeetingButton appointmentId={appointment.id} />
-        ) : null}
+        <LeaveMeetingButton appointmentId={appointment.id} role={leaveRole} />
       </header>
 
       {requiresJitsiHostLogin(jitsiDomain) ? (
