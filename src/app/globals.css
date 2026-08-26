@@ -3135,6 +3135,27 @@ footer {
   background: color-mix(in srgb, var(--color-primary) 3%, var(--color-surface));
 }
 
+@media (max-width: 560px) {
+  .app-content:has(.appointment-request-panel) {
+    padding-top: 28px;
+    padding-bottom: 28px;
+  }
+
+  .appointment-request-panel.app-panel {
+    padding: 20px 16px;
+    box-shadow: none;
+  }
+
+  .appointment-request-panel,
+  .appointment-form {
+    gap: 20px;
+  }
+
+  .appointment-form {
+    padding: 16px;
+  }
+}
+
 .appointment-field {
   display: grid;
   gap: 8px;
@@ -3239,7 +3260,8 @@ footer {
   margin: 0;
   border: 0;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 12px 12px;
+  min-height: 44px;
   background: transparent;
   color: var(--color-ink);
   font: inherit;
@@ -4096,13 +4118,13 @@ footer {
 
 @media (max-width: 480px) {
   .agenda-clock__item {
-    grid-template-columns: 4.75rem minmax(0, 1fr);
-    gap: 14px;
+    grid-template-columns: 3.75rem minmax(0, 1fr);
+    gap: 12px;
   }
 
   .agenda-clock__time {
-    gap: 8px;
-    font-size: 0.8rem;
+    gap: 6px;
+    font-size: 0.78rem;
   }
 }
 
@@ -4323,11 +4345,35 @@ footer {
   padding: 16px 0;
 }
 
+.week-strip__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .week-strip__header h2 {
   margin: 0;
   font-family: var(--font-accent), Georgia, "Times New Roman", serif;
   font-size: 1.15rem;
   font-weight: 500;
+}
+
+.week-strip__clear {
+  margin: 0;
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.week-strip__clear:focus-visible {
+  outline: 3px solid var(--color-accent-soft);
+  outline-offset: 2px;
 }
 
 .week-strip__days {
@@ -4343,11 +4389,42 @@ footer {
   display: grid;
   justify-items: center;
   gap: 2px;
-  padding: 8px 2px 10px;
+  min-width: 0;
+  padding: 0;
   background: transparent;
 }
 
-.week-strip__day-today {
+.week-strip__day-button {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  margin: 0;
+  border: 0;
+  border-radius: 12px;
+  padding: 8px 2px 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.week-strip__day-button:focus-visible {
+  outline: 3px solid var(--color-accent-soft);
+  outline-offset: 1px;
+}
+
+.week-strip__day:not(:has(.week-strip__day-button)) {
+  padding: 8px 2px 10px;
+}
+
+.week-strip__day-today .week-strip__day-button,
+.week-strip__day-today:not(:has(.week-strip__day-button)) {
+  box-shadow: inset 0 -3px 0 var(--color-primary);
+}
+
+.week-strip__day-selected .week-strip__day-button {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
   box-shadow: inset 0 -3px 0 var(--color-primary);
 }
 
@@ -4358,6 +4435,10 @@ footer {
   text-transform: uppercase;
 }
 
+.week-strip__weekday--narrow {
+  display: none;
+}
+
 .week-strip__date {
   font-size: 0.95rem;
   font-weight: 800;
@@ -4365,6 +4446,7 @@ footer {
 
 .week-strip__marker {
   min-width: 18px;
+  min-height: 1.1em;
   border-radius: 999px;
   padding: 1px 5px;
   background: var(--color-primary);
@@ -4374,27 +4456,47 @@ footer {
   text-align: center;
 }
 
-@media (max-width: 360px) {
+.week-strip__marker--empty {
+  background: transparent;
+  color: transparent;
+}
+
+@media (max-width: 420px) {
   .week-strip__days {
-    gap: 2px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
   }
 
   .week-strip__day {
-    padding: 6px 1px 8px;
+    flex: 0 0 2.85rem;
+    scroll-snap-align: start;
   }
 
-  .week-strip__weekday {
-    font-size: 0.58rem;
+  .week-strip__day-button {
+    padding: 10px 4px;
+    min-height: 64px;
+  }
+
+  .week-strip__weekday--short {
+    display: none;
+  }
+
+  .week-strip__weekday--narrow {
+    display: block;
+    font-size: 0.78rem;
   }
 
   .week-strip__date {
-    font-size: 0.82rem;
+    font-size: 0.95rem;
   }
 
   .week-strip__marker {
     min-width: 16px;
-    padding: 1px 4px;
-    font-size: 0.62rem;
+    font-size: 0.65rem;
   }
 }
 
@@ -4869,6 +4971,82 @@ body:has(.meeting-studio--live) {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+/* Mobile: maximize video area for Libras (face + hands). */
+@media (max-width: 680px) {
+  .app-shell:has(.meeting-studio--live) > .app-header {
+    display: none;
+  }
+
+  .app-content:has(.meeting-studio--live) {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+  }
+
+  .meeting-studio--live {
+    gap: 0;
+    border-radius: 0;
+  }
+
+  .meeting-studio--live .meeting-studio__atmosphere {
+    display: none;
+  }
+
+  .meeting-studio--live .meeting-studio__chrome {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px 12px;
+    padding: max(6px, env(safe-area-inset-top)) 12px 8px;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--color-primary) 12%, transparent);
+  }
+
+  .meeting-studio--live .meeting-studio__heading,
+  .meeting-studio--live .meeting-studio__meta {
+    display: none;
+  }
+
+  .meeting-studio--live .meeting-studio__identity {
+    gap: 0;
+  }
+
+  .meeting-studio--live .meeting-studio__live {
+    padding-bottom: 0;
+  }
+
+  .meeting-studio--live .leave-meeting {
+    justify-items: end;
+    align-self: center;
+  }
+
+  .meeting-studio--live .leave-meeting__button {
+    width: auto;
+    min-height: 40px;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  .meeting-studio--live .meeting-host-hint {
+    margin: 0;
+    border-radius: 0;
+    border-left-width: 3px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+
+  .meeting-studio--live .meeting-studio__stage {
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .meeting-studio--live .jitsi-meeting-frame,
+  .meeting-studio--live .meeting-error {
+    border-radius: 0;
+    min-height: 0;
+  }
 }
 
 .meeting-studio {

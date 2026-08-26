@@ -1,33 +1,13 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { expireStaleAppointments } from "@/actions/appointments";
-import { WeekStrip } from "@/components/appointments/WeekStrip";
+import {
+  InterpreterAgendaBoard,
+  type AgendaBoardAppointment,
+} from "@/components/appointments/InterpreterAgendaBoard";
 import { AppBackLink } from "@/components/navigation/AppBackLink";
-import { appointmentReasonDisplayLabel } from "@/lib/domain/reasons";
 import { isUpcomingAppointment } from "@/lib/domain/meeting-access";
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database";
-
-const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
-  dateStyle: "full",
-});
-
-const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
-  timeStyle: "short",
-});
-
-type AgendaAppointment = Pick<
-  Database["public"]["Tables"]["appointments"]["Row"],
-  | "id"
-  | "status"
-  | "scheduled_at"
-  | "duration_minutes"
-  | "reason_code"
-  | "reason_custom_title"
-  | "reason_text"
-  | "requester_id"
->;
 
 export default async function InterpreterAgendaPage() {
   const supabase = await createClient();
@@ -91,20 +71,25 @@ export default async function InterpreterAgendaPage() {
     (requesters ?? []).map((requester) => [requester.id, requester.full_name]),
   );
 
-  function displayName(requesterId: string) {
-    return requesterNames.get(requesterId)?.trim() || "Usuário";
-  }
-
-  function canEnterMeeting(appointment: AgendaAppointment) {
-    return (
-      appointment.status === "accepted" &&
-      isUpcomingAppointment(
-        new Date(appointment.scheduled_at),
-        appointment.duration_minutes,
-        now,
-      )
-    );
-  }
+  const boardAppointments: AgendaBoardAppointment[] = list.map(
+    (appointment) => ({
+      id: appointment.id,
+      status: appointment.status,
+      scheduled_at: appointment.scheduled_at,
+      duration_minutes: appointment.duration_minutes,
+      reason_code: appointment.reason_code,
+      reason_custom_title: appointment.reason_custom_title,
+      requester_name:
+        requesterNames.get(appointment.requester_id)?.trim() || "Usuário",
+      can_enter:
+        appointment.status === "accepted" &&
+        isUpcomingAppointment(
+          new Date(appointment.scheduled_at),
+          appointment.duration_minutes,
+          now,
+        ),
+    }),
+  );
 
   const weekAppointments = list.map((appointment) => ({
     id: appointment.id,
@@ -125,77 +110,17 @@ export default async function InterpreterAgendaPage() {
           {list.length === 0
             ? "Aceite um pedido na fila para montar sua semana."
             : list.length === 1
-              ? "1 atendimento na sua agenda."
-              : `${list.length} atendimentos na sua agenda.`}
+              ? "1 atendimento na sua agenda. Toque em um dia para filtrar."
+              : `${list.length} atendimentos na sua agenda. Toque em um dia para filtrar.`}
         </p>
       </header>
 
-      <WeekStrip appointments={weekAppointments} referenceDate={now} />
-
-      {appointmentsError ? (
-        <p className="user-dashboard-error" role="alert">
-          Não foi possível carregar a agenda. Recarregue a página.
-        </p>
-      ) : list.length === 0 ? (
-        <div className="agenda-desk__empty" role="status">
-          <h2>Nada confirmado ainda</h2>
-          <p>Quando você aceitar um pedido, ele aparece aqui na linha do tempo.</p>
-        </div>
-      ) : (
-        <ol className="agenda-clock" aria-labelledby="agenda-title">
-          {list.map((appointment, index) => {
-            const scheduledAt = new Date(appointment.scheduled_at);
-            const isNext = index === 0;
-
-            return (
-              <li
-                key={appointment.id}
-                className={
-                  isNext
-                    ? "agenda-clock__item agenda-clock__item--next"
-                    : "agenda-clock__item"
-                }
-              >
-                <div className="agenda-clock__time" aria-hidden="true">
-                  <span>{timeFormatter.format(scheduledAt)}</span>
-                  <i />
-                </div>
-                <article className="agenda-clock__card">
-                  {isNext ? (
-                    <p className="agenda-clock__badge">Próximo</p>
-                  ) : null}
-                  <h2>{displayName(appointment.requester_id)}</h2>
-                  <p className="agenda-clock__reason">
-                    {appointmentReasonDisplayLabel(
-                      appointment.reason_code,
-                      appointment.reason_custom_title,
-                    )}
-                  </p>
-                  <time dateTime={appointment.scheduled_at}>
-                    {dateFormatter.format(scheduledAt)}
-                  </time>
-                  <p className="agenda-clock__duration">
-                    {appointment.duration_minutes} minutos
-                  </p>
-                  {appointment.status === "cancel_requested" ? (
-                    <span className="request-status-badge request-status-badge-cancel_requested">
-                      Cancelamento em análise
-                    </span>
-                  ) : null}
-                  {canEnterMeeting(appointment) ? (
-                    <Link
-                      className="user-request-link agenda-clock__enter"
-                      href={`/app/meeting/${appointment.id}`}
-                    >
-                      Entrar na chamada <span aria-hidden="true">→</span>
-                    </Link>
-                  ) : null}
-                </article>
-              </li>
-            );
-          })}
-        </ol>
-      )}
+      <InterpreterAgendaBoard
+        appointments={boardAppointments}
+        weekAppointments={weekAppointments}
+        referenceIso={now.toISOString()}
+        loadError={Boolean(appointmentsError)}
+      />
     </div>
   );
 }
