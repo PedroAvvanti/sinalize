@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import { createAppointmentAction } from "@/actions/appointments";
+import { IosDateTimePicker } from "@/components/appointments/IosDateTimePicker";
 import { APPOINTMENT_DURATIONS } from "@/lib/domain/appointments";
 import {
   APPOINTMENT_REASONS,
@@ -52,6 +53,7 @@ export function AppointmentRequestForm() {
   const menuId = useId();
   const comboboxRef = useRef<HTMLDivElement>(null);
   const [minimumScheduledAt] = useState(minimumLocalDateTime);
+  const [scheduledAt, setScheduledAt] = useState("");
   const [reasonCode, setReasonCode] = useState("");
   const [customTitle, setCustomTitle] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -103,12 +105,11 @@ export function AppointmentRequestForm() {
 
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const scheduledAt = String(formData.get("scheduledAt") ?? "");
     const durationMinutes = Number(formData.get("durationMinutes"));
     const reasonText = String(formData.get("reasonText") ?? "");
     const parsedScheduledAt = new Date(scheduledAt);
 
-    if (Number.isNaN(parsedScheduledAt.getTime())) {
+    if (!scheduledAt || Number.isNaN(parsedScheduledAt.getTime())) {
       setMessage({ kind: "error", text: "Escolha uma data e hora válidas." });
       return;
     }
@@ -141,6 +142,7 @@ export function AppointmentRequestForm() {
       }
 
       form.reset();
+      setScheduledAt("");
       setReasonCode("");
       setCustomTitle("");
       setMenuOpen(false);
@@ -249,15 +251,18 @@ export function AppointmentRequestForm() {
 
       <div className="appointment-field">
         <label htmlFor="scheduledAt">Data e hora</label>
-        <input
+        <IosDateTimePicker
           id="scheduledAt"
           name="scheduledAt"
-          type="datetime-local"
           min={minimumScheduledAt}
+          value={scheduledAt}
+          onChange={setScheduledAt}
           required
           disabled={isPending}
         />
-        <span>Escolha um horário futuro no seu fuso local.</span>
+        <span className="appointment-field-hint">
+          Escolha um horário futuro no seu fuso local.
+        </span>
       </div>
 
       <div className="appointment-field">
