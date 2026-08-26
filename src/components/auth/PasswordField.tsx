@@ -2,6 +2,8 @@
 
 import { useId, useState, type ChangeEventHandler } from "react";
 
+import { FieldError, RequiredMark } from "@/components/forms/FieldError";
+
 type PasswordFieldProps = {
   id: string;
   name: string;
@@ -38,7 +40,10 @@ export function PasswordField({
 
   return (
     <div className={`auth-field${error ? " auth-field--invalid" : ""}`}>
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id}>
+        {label}
+        {required ? <RequiredMark /> : null}
+      </label>
       <div className="auth-password-input">
         <input
           id={id}
@@ -92,11 +97,7 @@ export function PasswordField({
           )}
         </button>
       </div>
-      {error ? (
-        <span id={errorId} className="auth-field-error" role="alert">
-          {error}
-        </span>
-      ) : null}
+      {error ? <FieldError id={errorId} message={error} /> : null}
       {help ? <span id={helpId}>{help}</span> : null}
     </div>
   );

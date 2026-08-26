@@ -24,6 +24,8 @@ type IosDateTimePickerProps = {
   onChange: (next: string) => void;
   disabled?: boolean;
   required?: boolean;
+  invalid?: boolean;
+  describedBy?: string;
 };
 
 type WheelColumnProps<T extends string | number> = {
@@ -344,6 +346,8 @@ export function IosDateTimePicker({
   onChange,
   disabled = false,
   required = false,
+  invalid = false,
+  describedBy,
 }: IosDateTimePickerProps) {
   const panelId = useId();
   const wheelId = useId();
@@ -501,10 +505,12 @@ export function IosDateTimePicker({
         >
           <button
             type="button"
-            className="ios-dt__header"
+            className={`ios-dt__header${invalid ? " ios-dt__header--invalid" : ""}`}
             disabled={disabled}
             aria-expanded="true"
             aria-controls={panelId}
+            aria-invalid={invalid ? true : undefined}
+            aria-describedby={describedBy}
             onClick={() => setOpen(false)}
           >
             <span className="ios-dt__trigger-icon">
@@ -586,11 +592,13 @@ export function IosDateTimePicker({
       ) : (
         <button
           type="button"
-          className="ios-dt__trigger"
+          className={`ios-dt__trigger${invalid ? " ios-dt__trigger--invalid" : ""}`}
           disabled={disabled}
           aria-haspopup="dialog"
           aria-expanded="false"
           aria-controls={panelId}
+          aria-invalid={invalid ? true : undefined}
+          aria-describedby={describedBy}
           onClick={openPicker}
         >
           <span className="ios-dt__trigger-icon">

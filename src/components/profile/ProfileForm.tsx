@@ -1,8 +1,9 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 
 import { updateProfileAction } from "@/actions/profile";
+import { FieldError, RequiredMark } from "@/components/forms/FieldError";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 type ProfileFormProps = {
@@ -17,23 +18,44 @@ export function ProfileForm({
   roleLabel,
 }: ProfileFormProps) {
   const nameId = useId();
+  const nameErrorId = useId();
+  const nameRef = useRef<HTMLInputElement>(null);
   const [fullName, setFullName] = useState(initialName);
+  const [nameError, setNameError] = useState<string>();
   const [feedback, setFeedback] = useState<string>();
-  const [feedbackKind, setFeedbackKind] = useState<"success" | "error">("success");
+  const [feedbackKind, setFeedbackKind] = useState<"success" | "error">(
+    "success",
+  );
   const [isPending, startTransition] = useTransition();
 
   function saveProfile() {
+    const trimmed = fullName.trim();
+
+    if (!trimmed) {
+      setNameError("Informe seu nome completo.");
+      setFeedback(undefined);
+      nameRef.current?.focus();
+      return;
+    }
+
+    setNameError(undefined);
     setFeedback(undefined);
 
     startTransition(async () => {
-      const result = await updateProfileAction({ fullName });
+      const result = await updateProfileAction({ fullName: trimmed });
 
       if (!result.ok) {
+        if (result.error.toLowerCase().includes("nome")) {
+          setNameError(result.error);
+          nameRef.current?.focus();
+          return;
+        }
         setFeedbackKind("error");
         setFeedback(result.error);
         return;
       }
 
+      setFullName(trimmed);
       setFeedbackKind("success");
       setFeedback("Perfil atualizado.");
     });
@@ -54,16 +76,31 @@ export function ProfileForm({
         ) : null}
       </dl>
 
-      <div className="appointment-field">
-        <label htmlFor={nameId}>Nome completo</label>
+      <div
+        className={`appointment-field${nameError ? " appointment-field--invalid" : ""}`}
+      >
+        <label htmlFor={nameId}>
+          Nome completo
+          <RequiredMark />
+        </label>
         <input
+          ref={nameRef}
           id={nameId}
           type="text"
           value={fullName}
           disabled={isPending}
-          onChange={(event) => setFullName(event.target.value)}
+          required
+          aria-invalid={nameError ? true : undefined}
+          aria-describedby={nameError ? nameErrorId : undefined}
+          onChange={(event) => {
+            setFullName(event.target.value);
+            setNameError(undefined);
+          }}
           autoComplete="name"
         />
+        {nameError ? (
+          <FieldError id={nameErrorId} message={nameError} />
+        ) : null}
       </div>
 
       <div className="profile-form__theme">

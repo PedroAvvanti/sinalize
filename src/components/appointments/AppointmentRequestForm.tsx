@@ -11,7 +11,13 @@ import {
 
 import { createAppointmentAction } from "@/actions/appointments";
 import { IosDateTimePicker } from "@/components/appointments/IosDateTimePicker";
+import { FieldError, RequiredMark } from "@/components/forms/FieldError";
 import { APPOINTMENT_DURATIONS } from "@/lib/domain/appointments";
+import {
+  hasAppointmentRequestFieldErrors,
+  validateAppointmentRequestForm,
+  type AppointmentRequestFieldErrors,
+} from "@/lib/domain/appointment-request-form";
 import {
   APPOINTMENT_REASONS,
   REASON_CUSTOM_TITLE_MAX_LENGTH,
@@ -50,13 +56,21 @@ function ChevronIcon() {
 
 export function AppointmentRequestForm() {
   const reasonFieldId = useId();
+  const reasonErrorId = useId();
+  const scheduledAtErrorId = useId();
   const menuId = useId();
   const comboboxRef = useRef<HTMLDivElement>(null);
+  const reasonSelectRef = useRef<HTMLSelectElement>(null);
+  const customTitleRef = useRef<HTMLInputElement>(null);
+  const scheduledAtRef = useRef<HTMLDivElement>(null);
   const [minimumScheduledAt] = useState(minimumLocalDateTime);
   const [scheduledAt, setScheduledAt] = useState("");
   const [reasonCode, setReasonCode] = useState("");
   const [customTitle, setCustomTitle] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<AppointmentRequestFieldErrors>(
+    {},
+  );
   const [message, setMessage] = useState<
     { kind: "error" | "success"; text: string } | undefined
   >();
@@ -91,11 +105,40 @@ export function AppointmentRequestForm() {
     };
   }, [menuOpen]);
 
+  function clearFieldError(field: keyof AppointmentRequestFieldErrors) {
+    setFieldErrors((current) => {
+      if (!current[field]) {
+        return current;
+      }
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
   function selectReason(nextCode: string) {
     setReasonCode(nextCode);
+    clearFieldError("reason");
     setMenuOpen(false);
     if (nextCode !== "outro") {
       setCustomTitle("");
+    }
+  }
+
+  function focusFirstInvalid(errors: AppointmentRequestFieldErrors) {
+    if (errors.reason) {
+      if (reasonCode === "outro") {
+        customTitleRef.current?.focus();
+      } else {
+        reasonSelectRef.current?.focus();
+      }
+      return;
+    }
+
+    if (errors.scheduledAt) {
+      scheduledAtRef.current
+        ?.querySelector<HTMLButtonElement>("button.ios-dt__trigger")
+        ?.focus();
     }
   }
 
@@ -107,25 +150,20 @@ export function AppointmentRequestForm() {
     const formData = new FormData(form);
     const durationMinutes = Number(formData.get("durationMinutes"));
     const reasonText = String(formData.get("reasonText") ?? "");
+    const errors = validateAppointmentRequestForm({
+      reasonCode,
+      customTitle,
+      scheduledAt,
+    });
+
+    setFieldErrors(errors);
+
+    if (hasAppointmentRequestFieldErrors(errors)) {
+      focusFirstInvalid(errors);
+      return;
+    }
+
     const parsedScheduledAt = new Date(scheduledAt);
-
-    if (!scheduledAt || Number.isNaN(parsedScheduledAt.getTime())) {
-      setMessage({ kind: "error", text: "Escolha uma data e hora válidas." });
-      return;
-    }
-
-    if (!reasonCode) {
-      setMessage({ kind: "error", text: "Selecione o motivo do atendimento." });
-      return;
-    }
-
-    if (isCustomReason && !customTitle.trim()) {
-      setMessage({
-        kind: "error",
-        text: "Digite o motivo do atendimento.",
-      });
-      return;
-    }
 
     startTransition(async () => {
       const result = await createAppointmentAction({
@@ -146,6 +184,7 @@ export function AppointmentRequestForm() {
       setReasonCode("");
       setCustomTitle("");
       setMenuOpen(false);
+      setFieldErrors({});
       setMessage({
         kind: "success",
         text: "Solicitação criada. Agora ela está disponível para atendimento.",
@@ -154,15 +193,19 @@ export function AppointmentRequestForm() {
   }
 
   return (
-    <form className="appointment-form" onSubmit={handleSubmit}>
-      <div className="appointment-field">
+    <form className="appointment-form" noValidate onSubmit={handleSubmit}>
+      <div
+        className={`appointment-field${fieldErrors.reason ? " appointment-field--invalid" : ""}`}
+      >
         <label htmlFor={isCustomReason ? reasonFieldId : "reasonCode"}>
           Motivo do atendimento
+          <RequiredMark />
         </label>
 
         {isCustomReason ? (
           <div className="reason-combobox" ref={comboboxRef}>
             <input
+              ref={customTitleRef}
               id={reasonFieldId}
               type="text"
               value={customTitle}
@@ -171,7 +214,14 @@ export function AppointmentRequestForm() {
               placeholder="Digite o motivo do atendimento"
               disabled={isPending}
               autoComplete="off"
-              onChange={(event) => setCustomTitle(event.target.value)}
+              aria-invalid={fieldErrors.reason ? true : undefined}
+              aria-describedby={
+                fieldErrors.reason ? reasonErrorId : undefined
+              }
+              onChange={(event) => {
+                setCustomTitle(event.target.value);
+                clearFieldError("reason");
+              }}
             />
             <button
               className="reason-combobox__toggle"
@@ -214,10 +264,15 @@ export function AppointmentRequestForm() {
           </div>
         ) : (
           <select
+            ref={reasonSelectRef}
             id="reasonCode"
             value={reasonCode}
             required
             disabled={isPending}
+            aria-invalid={fieldErrors.reason ? true : undefined}
+            aria-describedby={
+              fieldErrors.reason ? reasonErrorId : undefined
+            }
             onChange={(event) => selectReason(event.target.value)}
           >
             <option value="" disabled>
@@ -230,10 +285,16 @@ export function AppointmentRequestForm() {
             ))}
           </select>
         )}
+        {fieldErrors.reason ? (
+          <FieldError id={reasonErrorId} message={fieldErrors.reason} />
+        ) : null}
       </div>
 
       <div className="appointment-field">
-        <label htmlFor="durationMinutes">Duração</label>
+        <label htmlFor="durationMinutes">
+          Duração
+          <RequiredMark />
+        </label>
         <select
           id="durationMinutes"
           name="durationMinutes"
@@ -249,20 +310,41 @@ export function AppointmentRequestForm() {
         </select>
       </div>
 
-      <div className="appointment-field">
-        <label htmlFor="scheduledAt">Data e hora</label>
-        <IosDateTimePicker
-          id="scheduledAt"
-          name="scheduledAt"
-          min={minimumScheduledAt}
-          value={scheduledAt}
-          onChange={setScheduledAt}
-          required
-          disabled={isPending}
-        />
-        <span className="appointment-field-hint">
-          Escolha um horário futuro no seu fuso local.
-        </span>
+      <div
+        className={`appointment-field${fieldErrors.scheduledAt ? " appointment-field--invalid" : ""}`}
+      >
+        <label htmlFor="scheduledAt">
+          Data e hora
+          <RequiredMark />
+        </label>
+        <div ref={scheduledAtRef}>
+          <IosDateTimePicker
+            id="scheduledAt"
+            name="scheduledAt"
+            min={minimumScheduledAt}
+            value={scheduledAt}
+            onChange={(next) => {
+              setScheduledAt(next);
+              clearFieldError("scheduledAt");
+            }}
+            required
+            disabled={isPending}
+            invalid={Boolean(fieldErrors.scheduledAt)}
+            describedBy={
+              fieldErrors.scheduledAt ? scheduledAtErrorId : undefined
+            }
+          />
+        </div>
+        {fieldErrors.scheduledAt ? (
+          <FieldError
+            id={scheduledAtErrorId}
+            message={fieldErrors.scheduledAt}
+          />
+        ) : (
+          <span className="appointment-field-hint">
+            Escolha um horário futuro no seu fuso local.
+          </span>
+        )}
       </div>
 
       <div className="appointment-field">

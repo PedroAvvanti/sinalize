@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 
 import { finalizeSignupRoleAction } from "@/actions/auth";
 import { PasswordField } from "@/components/auth/PasswordField";
+import { FieldError, RequiredMark } from "@/components/forms/FieldError";
 import {
   authMessageFor,
   validatePasswordConfirmation,
@@ -25,12 +26,17 @@ type FormValues = {
   role: string;
 };
 
+type FieldErrors = {
+  full_name?: string;
+  email?: string;
+  password?: string;
+  password_confirm?: string;
+  is_adult?: string;
+};
+
 type FormState = {
   error?: string;
-  fieldErrors?: {
-    password?: string;
-    password_confirm?: string;
-  };
+  fieldErrors?: FieldErrors;
   values?: FormValues;
   resetKey?: string;
 };
@@ -43,22 +49,35 @@ const INITIAL_VALUES: FormValues = {
   role: "user",
 };
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 export function SignupForm() {
   const router = useRouter();
+  const adultErrorId = useId();
+  const nameErrorId = useId();
+  const emailErrorId = useId();
+  const nameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const adultRef = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<FormState>({});
   const [pending, setPending] = useState(false);
   const [passwordTooShort, setPasswordTooShort] = useState(false);
   const [passwordMismatch, setPasswordMismatch] = useState(false);
+  const [clientFieldErrors, setClientFieldErrors] = useState<FieldErrors>({});
 
   const values = state.values ?? INITIAL_VALUES;
   const passwordError = passwordTooShort
     ? PASSWORD_TOO_SHORT
-    : state.fieldErrors?.password;
+    : clientFieldErrors.password ?? state.fieldErrors?.password;
   const confirmError = passwordMismatch
     ? PASSWORD_MISMATCH
-    : state.fieldErrors?.password_confirm;
+    : clientFieldErrors.password_confirm ?? state.fieldErrors?.password_confirm;
   const formError =
-    state.error && !state.fieldErrors?.password && !state.fieldErrors?.password_confirm
+    state.error &&
+    !state.fieldErrors?.password &&
+    !state.fieldErrors?.password_confirm
       ? state.error
       : null;
 
@@ -69,6 +88,26 @@ export function SignupForm() {
     if (passwordMismatch) {
       setPasswordMismatch(false);
     }
+    setClientFieldErrors((current) => {
+      if (!current.password && !current.password_confirm) {
+        return current;
+      }
+      const next = { ...current };
+      delete next.password;
+      delete next.password_confirm;
+      return next;
+    });
+  }
+
+  function clearFieldError(field: keyof FieldErrors) {
+    setClientFieldErrors((current) => {
+      if (!current[field]) {
+        return current;
+      }
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
   }
 
   function fail(
@@ -81,6 +120,24 @@ export function SignupForm() {
       resetKey: `${Date.now()}`,
     });
     setPending(false);
+  }
+
+  function focusFirstInvalid(errors: FieldErrors) {
+    if (errors.full_name) {
+      nameRef.current?.focus();
+      return;
+    }
+    if (errors.email) {
+      emailRef.current?.focus();
+      return;
+    }
+    if (errors.password || errors.password_confirm) {
+      document.getElementById("password")?.focus();
+      return;
+    }
+    if (errors.is_adult) {
+      adultRef.current?.focus();
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -101,30 +158,64 @@ export function SignupForm() {
       role: requestedRole,
     };
 
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setPasswordTooShort(true);
-      setPasswordMismatch(false);
-      return;
+    const errors: FieldErrors = {};
+
+    if (!fullName) {
+      errors.full_name = "Informe seu nome completo.";
     }
 
-    const confirmation = validatePasswordConfirmation(password, passwordConfirm);
-    if (!confirmation.ok) {
-      setPasswordTooShort(false);
-      setPasswordMismatch(true);
+    if (!email) {
+      errors.email = "Informe seu e-mail.";
+    } else if (!isValidEmail(email)) {
+      errors.email = "Informe um e-mail válido.";
+    }
+
+    if (!password) {
+      errors.password = "Informe uma senha.";
+    } else if (password.length < MIN_PASSWORD_LENGTH) {
+      errors.password = PASSWORD_TOO_SHORT;
+    }
+
+    if (!passwordConfirm) {
+      errors.password_confirm = "Confirme sua senha.";
+    } else {
+      const confirmation = validatePasswordConfirmation(
+        password,
+        passwordConfirm,
+      );
+      if (!confirmation.ok) {
+        errors.password_confirm = confirmation.error;
+      }
+    }
+
+    if (!adult) {
+      errors.is_adult = authMessageFor("adult_required");
+    }
+
+    if (
+      errors.full_name ||
+      errors.email ||
+      errors.password ||
+      errors.password_confirm ||
+      errors.is_adult
+    ) {
+      setPasswordTooShort(Boolean(errors.password === PASSWORD_TOO_SHORT));
+      setPasswordMismatch(
+        Boolean(errors.password_confirm === PASSWORD_MISMATCH),
+      );
+      setClientFieldErrors(errors);
+      setState({ values: nextValues });
+      focusFirstInvalid(errors);
       return;
     }
 
     setPasswordTooShort(false);
     setPasswordMismatch(false);
+    setClientFieldErrors({});
 
     const eligibility = validateSignupEligibility(requestedRole, adult);
     if (!eligibility.ok) {
       fail(nextValues, { error: eligibility.error });
-      return;
-    }
-
-    if (!fullName || !email || !password) {
-      fail(nextValues, { error: "Preencha nome, e-mail e senha." });
       return;
     }
 
@@ -172,30 +263,59 @@ export function SignupForm() {
     <form
       key={state.resetKey ?? "signup"}
       className="auth-form"
+      noValidate
       onSubmit={handleSubmit}
     >
-      <div className="auth-field">
-        <label htmlFor="full_name">Nome completo</label>
+      <div
+        className={`auth-field${clientFieldErrors.full_name ? " auth-field--invalid" : ""}`}
+      >
+        <label htmlFor="full_name">
+          Nome completo
+          <RequiredMark />
+        </label>
         <input
+          ref={nameRef}
           id="full_name"
           name="full_name"
           type="text"
           autoComplete="name"
           defaultValue={values.full_name}
           required
+          aria-invalid={clientFieldErrors.full_name ? true : undefined}
+          aria-describedby={
+            clientFieldErrors.full_name ? nameErrorId : undefined
+          }
+          onChange={() => clearFieldError("full_name")}
         />
+        {clientFieldErrors.full_name ? (
+          <FieldError id={nameErrorId} message={clientFieldErrors.full_name} />
+        ) : null}
       </div>
 
-      <div className="auth-field">
-        <label htmlFor="email">E-mail</label>
+      <div
+        className={`auth-field${clientFieldErrors.email ? " auth-field--invalid" : ""}`}
+      >
+        <label htmlFor="email">
+          E-mail
+          <RequiredMark />
+        </label>
         <input
+          ref={emailRef}
           id="email"
           name="email"
           type="email"
           autoComplete="email"
           defaultValue={values.email}
           required
+          aria-invalid={clientFieldErrors.email ? true : undefined}
+          aria-describedby={
+            clientFieldErrors.email ? emailErrorId : undefined
+          }
+          onChange={() => clearFieldError("email")}
         />
+        {clientFieldErrors.email ? (
+          <FieldError id={emailErrorId} message={clientFieldErrors.email} />
+        ) : null}
       </div>
 
       <PasswordField
@@ -220,8 +340,12 @@ export function SignupForm() {
 
       <fieldset className="auth-role-group">
         <legend className="auth-role-group__legend">
-          <span className="auth-role-group__title">Como você vai usar o Sinalize?</span>
-          <span className="auth-role-group__hint">Escolha uma opção — não é possível marcar as duas</span>
+          <span className="auth-role-group__title">
+            Como você vai usar o Sinalize?
+          </span>
+          <span className="auth-role-group__hint">
+            Escolha uma opção — não é possível marcar as duas
+          </span>
         </legend>
 
         <label className="auth-role-card auth-role-card--user">
@@ -253,20 +377,40 @@ export function SignupForm() {
         </label>
       </fieldset>
 
-      <div className="auth-legal-section" role="group" aria-labelledby="legal-section-title">
+      <div
+        className="auth-legal-section"
+        role="group"
+        aria-labelledby="legal-section-title"
+      >
         <p className="auth-legal-section__title" id="legal-section-title">
           Declaração obrigatória
+          <RequiredMark />
         </p>
         <p className="auth-legal-section__hint">
           Confirmação separada do tipo de conta acima.
         </p>
-        <label className="auth-legal-checkbox">
-          <input type="checkbox" name="is_adult" required />
+        <label
+          className={`auth-legal-checkbox${clientFieldErrors.is_adult ? " auth-legal-checkbox--invalid" : ""}`}
+        >
+          <input
+            ref={adultRef}
+            type="checkbox"
+            name="is_adult"
+            required
+            aria-invalid={clientFieldErrors.is_adult ? true : undefined}
+            aria-describedby={
+              clientFieldErrors.is_adult ? adultErrorId : undefined
+            }
+            onChange={() => clearFieldError("is_adult")}
+          />
           <span className="auth-legal-checkbox__content">
             <strong>Confirmo ter 18 anos ou mais</strong>
             <small>Exigido para criar qualquer conta no Sinalize.</small>
           </span>
         </label>
+        {clientFieldErrors.is_adult ? (
+          <FieldError id={adultErrorId} message={clientFieldErrors.is_adult} />
+        ) : null}
       </div>
 
       {formError ? (

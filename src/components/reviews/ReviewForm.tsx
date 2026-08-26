@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useId, useState, useTransition } from "react";
 
 import { submitReviewAction } from "@/actions/reviews";
+import { FieldError, RequiredMark } from "@/components/forms/FieldError";
 
 type ReviewFormProps = {
   appointmentId: string;
@@ -21,18 +22,22 @@ export function ReviewForm({
   homeHref,
 }: ReviewFormProps) {
   const commentId = useId();
+  const ratingErrorId = useId();
   const [rating, setRating] = useState<number | null>(null);
   const [comment, setComment] = useState("");
+  const [ratingError, setRatingError] = useState<string>();
   const [feedback, setFeedback] = useState<string>();
   const [submitted, setSubmitted] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function submitReview() {
     if (rating === null) {
-      setFeedback("Escolha uma nota de 1 a 5 estrelas.");
+      setRatingError("Escolha uma nota de 1 a 5 estrelas.");
+      setFeedback(undefined);
       return;
     }
 
+    setRatingError(undefined);
     setFeedback(undefined);
 
     startTransition(async () => {
@@ -67,6 +72,7 @@ export function ReviewForm({
   return (
     <form
       className="review-form"
+      noValidate
       onSubmit={(event) => {
         event.preventDefault();
         submitReview();
@@ -77,9 +83,20 @@ export function ReviewForm({
         <strong>{recipientName.trim() || "seu parceiro"}</strong>?
       </p>
 
-      <fieldset className="review-form__rating">
-        <legend>Nota</legend>
-        <div className="review-form__stars" role="radiogroup" aria-label="Nota">
+      <fieldset
+        className={`review-form__rating${ratingError ? " review-form__rating--invalid" : ""}`}
+      >
+        <legend>
+          Nota
+          <RequiredMark />
+        </legend>
+        <div
+          className="review-form__stars"
+          role="radiogroup"
+          aria-label="Nota"
+          aria-invalid={ratingError ? true : undefined}
+          aria-describedby={ratingError ? ratingErrorId : undefined}
+        >
           {ratingOptions.map((value) => (
             <label key={value} className="review-form__star">
               <input
@@ -88,12 +105,18 @@ export function ReviewForm({
                 value={value}
                 checked={rating === value}
                 disabled={isPending}
-                onChange={() => setRating(value)}
+                onChange={() => {
+                  setRating(value);
+                  setRatingError(undefined);
+                }}
               />
               <span aria-hidden="true">{value}</span>
             </label>
           ))}
         </div>
+        {ratingError ? (
+          <FieldError id={ratingErrorId} message={ratingError} />
+        ) : null}
       </fieldset>
 
       <div className="appointment-field">
