@@ -108,7 +108,7 @@ export type Database = {
           interpreter_id: string | null;
           status: AppointmentStatus;
           scheduled_at: string;
-          duration_minutes: 15 | 30 | 60;
+          duration_minutes: number;
           reason_code: AppointmentReasonCode;
           reason_custom_title: string | null;
           reason_text: string | null;
@@ -122,7 +122,7 @@ export type Database = {
           interpreter_id?: string | null;
           status?: AppointmentStatus;
           scheduled_at: string;
-          duration_minutes: 15 | 30 | 60;
+          duration_minutes: number;
           reason_code: AppointmentReasonCode;
           reason_custom_title?: string | null;
           reason_text?: string | null;
@@ -136,7 +136,7 @@ export type Database = {
           interpreter_id?: string | null;
           status?: AppointmentStatus;
           scheduled_at?: string;
-          duration_minutes?: 15 | 30 | 60;
+          duration_minutes?: number;
           reason_code?: AppointmentReasonCode;
           reason_custom_title?: string | null;
           reason_text?: string | null;

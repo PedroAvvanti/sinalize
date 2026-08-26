@@ -8,9 +8,14 @@ import {
 } from "../../src/lib/domain/appointments";
 
 describe("appointments domain", () => {
-  it("allows only 15/30/60", () => {
-    expect(isValidDuration(15)).toBe(true);
-    expect(isValidDuration(20)).toBe(false);
+  it("allows any positive integer minute duration", () => {
+    expect(isValidDuration(1)).toBe(true);
+    expect(isValidDuration(20)).toBe(true);
+    expect(isValidDuration(90)).toBe(true);
+    expect(isValidDuration(0)).toBe(false);
+    expect(isValidDuration(-5)).toBe(false);
+    expect(isValidDuration(1.5)).toBe(false);
+    expect(isValidDuration(Number.NaN)).toBe(false);
   });
 
   it("builds stable room names", () => {

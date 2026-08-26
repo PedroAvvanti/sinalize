@@ -1,11 +1,15 @@
+import { isValidDuration } from "./appointments";
+
 export type AppointmentRequestFieldErrors = {
   reason?: string;
+  durationMinutes?: string;
   scheduledAt?: string;
 };
 
 export type AppointmentRequestFormInput = {
   reasonCode: string;
   customTitle: string;
+  durationMinutes: number;
   scheduledAt: string;
 };
 
@@ -20,6 +24,10 @@ export function validateAppointmentRequestForm(
     errors.reason = "Digite o motivo do atendimento.";
   }
 
+  if (!isValidDuration(input.durationMinutes)) {
+    errors.durationMinutes = "Informe a duração em minutos (mínimo 1).";
+  }
+
   const parsedScheduledAt = new Date(input.scheduledAt);
   if (!input.scheduledAt || Number.isNaN(parsedScheduledAt.getTime())) {
     errors.scheduledAt = "Escolha uma data e hora válidas.";
@@ -31,5 +39,5 @@ export function validateAppointmentRequestForm(
 export function hasAppointmentRequestFieldErrors(
   errors: AppointmentRequestFieldErrors,
 ): boolean {
-  return Boolean(errors.reason || errors.scheduledAt);
+  return Boolean(errors.reason || errors.durationMinutes || errors.scheduledAt);
 }

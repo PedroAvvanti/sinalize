@@ -13,7 +13,6 @@ import {
 import { createAppointmentAction } from "@/actions/appointments";
 import { IosDateTimePicker } from "@/components/appointments/IosDateTimePicker";
 import { FieldError, RequiredMark } from "@/components/forms/FieldError";
-import { APPOINTMENT_DURATIONS } from "@/lib/domain/appointments";
 import {
   hasAppointmentRequestFieldErrors,
   validateAppointmentRequestForm,
@@ -59,14 +58,17 @@ export function AppointmentRequestForm() {
   const router = useRouter();
   const reasonFieldId = useId();
   const reasonErrorId = useId();
+  const durationErrorId = useId();
   const scheduledAtErrorId = useId();
   const menuId = useId();
   const comboboxRef = useRef<HTMLDivElement>(null);
   const reasonSelectRef = useRef<HTMLSelectElement>(null);
   const customTitleRef = useRef<HTMLInputElement>(null);
+  const durationRef = useRef<HTMLInputElement>(null);
   const scheduledAtRef = useRef<HTMLDivElement>(null);
   const [minimumScheduledAt] = useState(minimumLocalDateTime);
   const [scheduledAt, setScheduledAt] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState("30");
   const [reasonCode, setReasonCode] = useState("");
   const [customTitle, setCustomTitle] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -137,6 +139,11 @@ export function AppointmentRequestForm() {
       return;
     }
 
+    if (errors.durationMinutes) {
+      durationRef.current?.focus();
+      return;
+    }
+
     if (errors.scheduledAt) {
       scheduledAtRef.current
         ?.querySelector<HTMLButtonElement>("button.ios-dt__trigger")
@@ -150,11 +157,12 @@ export function AppointmentRequestForm() {
 
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const durationMinutes = Number(formData.get("durationMinutes"));
+    const parsedDuration = Number(formData.get("durationMinutes"));
     const reasonText = String(formData.get("reasonText") ?? "");
     const errors = validateAppointmentRequestForm({
       reasonCode,
       customTitle,
+      durationMinutes: parsedDuration,
       scheduledAt,
     });
 
@@ -170,7 +178,7 @@ export function AppointmentRequestForm() {
     startTransition(async () => {
       const result = await createAppointmentAction({
         scheduledAt: parsedScheduledAt.toISOString(),
-        durationMinutes: durationMinutes as 15 | 30 | 60,
+        durationMinutes: parsedDuration,
         reasonCode,
         reasonCustomTitle: customTitle,
         reasonText,
@@ -183,6 +191,7 @@ export function AppointmentRequestForm() {
 
       form.reset();
       setScheduledAt("");
+      setDurationMinutes("30");
       setReasonCode("");
       setCustomTitle("");
       setMenuOpen(false);
@@ -290,24 +299,39 @@ export function AppointmentRequestForm() {
         ) : null}
       </div>
 
-      <div className="appointment-field">
+      <div
+        className={`appointment-field${fieldErrors.durationMinutes ? " appointment-field--invalid" : ""}`}
+      >
         <label htmlFor="durationMinutes">
-          Duração
+          Duração (minutos)
           <RequiredMark />
         </label>
-        <select
+        <input
+          ref={durationRef}
           id="durationMinutes"
           name="durationMinutes"
-          defaultValue="30"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          step={1}
+          value={durationMinutes}
           required
           disabled={isPending}
-        >
-          {APPOINTMENT_DURATIONS.map((duration) => (
-            <option key={duration} value={duration}>
-              {duration} minutos
-            </option>
-          ))}
-        </select>
+          aria-invalid={fieldErrors.durationMinutes ? true : undefined}
+          aria-describedby={
+            fieldErrors.durationMinutes ? durationErrorId : undefined
+          }
+          onChange={(event) => {
+            setDurationMinutes(event.target.value);
+            clearFieldError("durationMinutes");
+          }}
+        />
+        {fieldErrors.durationMinutes ? (
+          <FieldError
+            id={durationErrorId}
+            message={fieldErrors.durationMinutes}
+          />
+        ) : null}
       </div>
 
       <div

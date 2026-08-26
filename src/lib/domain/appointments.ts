@@ -1,13 +1,11 @@
-export const APPOINTMENT_DURATIONS = [15, 30, 60] as const;
+export type AppointmentDuration = number;
 
-export type AppointmentDuration = (typeof APPOINTMENT_DURATIONS)[number];
+export function isValidDuration(value: number): value is AppointmentDuration {
+  return Number.isInteger(value) && value >= 1;
+}
 
 const CANONICAL_ISO_DATETIME =
   /^(\d{4})-(\d{2})-(\d{2})T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{3})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/;
-
-export function isValidDuration(value: number): value is AppointmentDuration {
-  return APPOINTMENT_DURATIONS.some((duration) => duration === value);
-}
 
 export function parseScheduledAtIso(value: string): Date | null {
   const match = CANONICAL_ISO_DATETIME.exec(value);
