@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   useEffect,
   useId,
@@ -55,6 +56,7 @@ function ChevronIcon() {
 }
 
 export function AppointmentRequestForm() {
+  const router = useRouter();
   const reasonFieldId = useId();
   const reasonErrorId = useId();
   const scheduledAtErrorId = useId();
@@ -72,7 +74,7 @@ export function AppointmentRequestForm() {
     {},
   );
   const [message, setMessage] = useState<
-    { kind: "error" | "success"; text: string } | undefined
+    { kind: "error"; text: string } | undefined
   >();
   const [isPending, startTransition] = useTransition();
   const isCustomReason = reasonCode === "outro";
@@ -185,10 +187,8 @@ export function AppointmentRequestForm() {
       setCustomTitle("");
       setMenuOpen(false);
       setFieldErrors({});
-      setMessage({
-        kind: "success",
-        text: "Solicitação criada. Agora ela está disponível para atendimento.",
-      });
+      router.push("/app/user");
+      router.refresh();
     });
   }
 
@@ -360,15 +360,7 @@ export function AppointmentRequestForm() {
       </div>
 
       {message ? (
-        <p
-          className={
-            message.kind === "error"
-              ? "auth-error"
-              : "appointment-form-success"
-          }
-          role={message.kind === "error" ? "alert" : "status"}
-          aria-live="polite"
-        >
+        <p className="auth-error" role="alert" aria-live="polite">
           {message.text}
         </p>
       ) : null}

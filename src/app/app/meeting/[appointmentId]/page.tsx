@@ -4,7 +4,10 @@ import { redirect } from "next/navigation";
 import { JitsiMeetEmbed } from "@/components/meeting/JitsiMeetEmbed";
 import { CompleteMeetingButton } from "@/components/meeting/CompleteMeetingButton";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
-import { getJitsiDomain } from "@/lib/jitsi/config";
+import {
+  getJitsiDomain,
+  requiresJitsiHostLogin,
+} from "@/lib/jitsi/config";
 import { canEnterMeeting } from "@/lib/jitsi/meeting-access";
 import { createClient } from "@/lib/supabase/server";
 
@@ -80,6 +83,8 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
     );
   }
 
+  const jitsiDomain = getJitsiDomain();
+
   return (
     <section className="meeting-page meeting-page-live" aria-labelledby="meeting-title">
       <header className="meeting-page__header">
@@ -95,8 +100,16 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
         ) : null}
       </header>
 
+      {requiresJitsiHostLogin(jitsiDomain) ? (
+        <p className="meeting-host-hint" role="note">
+          A primeira pessoa a entrar deve clicar em{" "}
+          <strong>Eu sou o anfitrião</strong> na tela do Jitsi para liberar a
+          sala. A outra pessoa pode aguardar.
+        </p>
+      ) : null}
+
       <JitsiMeetEmbed
-        domain={getJitsiDomain()}
+        domain={jitsiDomain}
         roomName={appointment.jitsi_room_name}
         displayName={profile.full_name.trim() || "Participante"}
       />

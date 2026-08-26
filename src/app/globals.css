@@ -3999,28 +3999,29 @@ footer {
 
 .agenda-clock__item {
   display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 5.25rem minmax(0, 1fr);
+  gap: 20px;
   align-items: stretch;
 }
 
 .agenda-clock__time {
   position: relative;
-  display: grid;
-  justify-items: end;
-  align-content: start;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 10px;
-  padding-top: 4px;
+  padding-top: 1px;
   color: var(--color-muted);
   font-variant-numeric: tabular-nums;
   font-size: 0.92rem;
   font-weight: 750;
+  line-height: 1.2;
 }
 
 .agenda-clock__time i {
-  position: absolute;
-  top: 0.55rem;
-  right: -0.55rem;
+  position: relative;
+  top: 0;
+  flex: 0 0 auto;
   z-index: 1;
   width: 10px;
   height: 10px;
@@ -4042,9 +4043,9 @@ footer {
 .agenda-clock__item:not(:last-child) .agenda-clock__time::after {
   content: "";
   position: absolute;
-  top: 1.35rem;
+  top: calc(1px + 0.6em + 5px);
   bottom: -0.35rem;
-  right: calc(-0.55rem + 3px);
+  right: 4px;
   width: 2px;
   background: color-mix(in srgb, var(--color-muted) 28%, transparent);
 }
@@ -4061,6 +4062,7 @@ footer {
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.1em;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
@@ -4094,11 +4096,12 @@ footer {
 
 @media (max-width: 480px) {
   .agenda-clock__item {
-    grid-template-columns: 3.4rem minmax(0, 1fr);
-    gap: 12px;
+    grid-template-columns: 4.75rem minmax(0, 1fr);
+    gap: 14px;
   }
 
   .agenda-clock__time {
+    gap: 8px;
     font-size: 0.8rem;
   }
 }
@@ -4176,12 +4179,13 @@ footer {
 
 .next-call-hero__gesture {
   position: absolute;
-  top: -8%;
-  right: -6%;
+  top: 28%;
+  right: -8%;
   z-index: 0;
   width: min(52vw, 320px);
   height: auto;
   pointer-events: none;
+  opacity: 0.85;
 }
 
 /* Path length measured via cubic sampling (≈328.34). */
@@ -4237,10 +4241,12 @@ footer {
 }
 
 .next-call-status {
+  position: relative;
+  z-index: 2;
   flex: 0 0 auto;
-  padding: 0 0 4px;
+  padding: 2px 0 4px;
   border-bottom: 2px solid var(--color-primary);
-  background: transparent;
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
   color: var(--color-primary);
   font-family: var(--font-accent), Georgia, serif;
   font-size: 0.92rem;
@@ -4831,7 +4837,6 @@ footer {
 
 .meeting-page-live {
   min-height: calc(100vh - 120px);
-  grid-template-rows: auto 1fr;
 }
 
 .meeting-page__header {
@@ -4846,6 +4851,21 @@ footer {
   max-width: 620px;
   color: var(--color-muted);
   line-height: 1.6;
+}
+
+.meeting-host-hint {
+  margin: 0;
+  max-width: 52ch;
+  padding: 12px 14px;
+  border-left: 3px solid var(--color-primary);
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.meeting-host-hint strong {
+  color: var(--color-text);
+  font-weight: 700;
 }
 
 .jitsi-meeting-frame,

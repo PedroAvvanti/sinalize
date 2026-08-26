@@ -8,7 +8,7 @@ Aplicação web **PWA** que conecta pessoas surdas a intérpretes de Libras por 
 - **npm**
 - Um projeto no [Supabase](https://supabase.com/dashboard/projects) (Auth, PostgreSQL, Storage, Realtime)
 
-**Vídeo:** usa o Jitsi Meet público em `meet.jit.si`, embutido no app. **Gratuito, sem conta 8x8/JaaS e sem chaves secretas de vídeo.**
+**Vídeo:** embed gratuito via `meet.jit.si`. A primeira pessoa clica em **“Eu sou o anfitrião”** para liberar a sala. Self-hosted opcional: [`docs/jitsi-self-hosted.md`](docs/jitsi-self-hosted.md).
 
 ## Clone e instalação
 
@@ -104,7 +104,10 @@ Ordem sugerida de demonstração:
 
 ## Videochamada (Jitsi Meet)
 
-- Embed via External API apontando para `meet.jit.si`.
+- Embed via External API apontando para `meet.jit.si` (grátis).
+- A primeira pessoa a entrar clica em **“Eu sou o anfitrião”** na tela do Jitsi; a outra aguarda.
+- A sala mostra um aviso com esse passo quando o domínio público está em uso.
+- Self-hosted (sem anfitrião) é opcional: [`docs/jitsi-self-hosted.md`](docs/jitsi-self-hosted.md).
 - Rota `/app/meeting/[appointmentId]` valida participante, status e janela de horário no servidor.
 - Gravação desabilitada no embed.
 - **Segurança MVP:** nome de sala opaco + gate na rota; quem souber o nome ainda poderia tentar entrar direto no Meet — aceitável para MVP acadêmico gratuito.
@@ -128,7 +131,7 @@ O build usa Webpack (`--webpack`) para compatibilidade com o service worker PWA 
 - **Sem vídeos em Libras** na interface — motivos em lista + texto opcional.
 - **Admin manual** — não há auto-cadastro público de administrador.
 - **Expiração/conclusão automática** roda ao carregar dashboards (não há cron dedicado).
-- **Jitsi público** — qualidade e disponibilidade dependem do serviço gratuito `meet.jit.si`.
+- **Jitsi público** — qualidade e disponibilidade dependem do `meet.jit.si`; a sala exige um anfitrião na primeira entrada.
 
 ## Estrutura principal
 
