@@ -54,10 +54,14 @@ export default async function AppLayout({
     >
       <div className="app-shell">
         <header className="app-header">
-          <div className="brand">
+          <Link
+            className="brand"
+            href={`/app/${profile.role}`}
+            aria-label="Ir para o início"
+          >
             <Image src="/logo.png" alt="" width={64} height={64} priority />
             <span>Sinalize</span>
-          </div>
+          </Link>
           <div className="app-account">
             <NotificationBell
               userId={userId}
