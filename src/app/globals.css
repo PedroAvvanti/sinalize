@@ -4141,6 +4141,16 @@ footer {
   gap: 28px;
 }
 
+.user-home-toast {
+  margin: 0;
+  border-left: 3px solid var(--color-accent-soft);
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--color-accent-soft) 10%, transparent);
+  color: var(--color-text);
+  font-weight: 650;
+  animation: hero-rise 280ms ease-out both;
+}
+
 .user-dashboard-error {
   color: var(--color-muted);
   line-height: 1.6;

@@ -1,49 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import {
-  NextCallHero,
-  type NextCallAppointment,
-} from "@/components/appointments/NextCallHero";
-import { RequestStatusList } from "@/components/appointments/RequestStatusList";
-import { WeekStrip } from "@/components/appointments/WeekStrip";
-import { EmptyState } from "@/components/ui/EmptyState";
+import type { NextCallAppointment } from "@/components/appointments/NextCallHero";
+import type { RequestStatusItem } from "@/components/appointments/RequestStatusList";
+import { UserHomeRealtime } from "@/components/appointments/UserHomeRealtime";
+import type { WeekAppointment } from "@/components/appointments/WeekStrip";
 import { expireStaleAppointments } from "@/actions/appointments";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
-import { isUpcomingAppointment } from "@/lib/domain/meeting-access";
 import { createClient } from "@/lib/supabase/server";
 
 const ACTIVE_STATUSES = ["open", "accepted", "cancel_requested"] as const;
-
-function pickNextCall(
-  appointments: NextCallAppointment[],
-  now: Date,
-): NextCallAppointment | null {
-  const upcoming = appointments.filter((appointment) =>
-    isUpcomingAppointment(
-      new Date(appointment.scheduled_at),
-      appointment.duration_minutes,
-      now,
-    ),
-  );
-
-  if (upcoming.length === 0) {
-    return null;
-  }
-
-  upcoming.sort(
-    (a, b) =>
-      new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime(),
-  );
-
-  const confirmed = upcoming.find(
-    (appointment) =>
-      appointment.status === "accepted" ||
-      appointment.status === "cancel_requested",
-  );
-
-  return confirmed ?? upcoming[0];
-}
 
 export default async function UserHomePage() {
   const supabase = await createClient();
@@ -100,7 +66,8 @@ export default async function UserHomePage() {
       .from("appointments")
       .select(
         "id, status, scheduled_at, duration_minutes, reason_code, reason_custom_title",
-      )      .eq("requester_id", userId)
+      )
+      .eq("requester_id", userId)
       .order("created_at", { ascending: false })
       .limit(5),
   ]);
@@ -117,38 +84,13 @@ export default async function UserHomePage() {
     );
   }
 
-  const activeList = (activeAppointments ?? []) as NextCallAppointment[];
-  const nextCall = pickNextCall(activeList, now);
-  const hasAnyUpcoming = activeList.some((appointment) =>
-    isUpcomingAppointment(
-      new Date(appointment.scheduled_at),
-      appointment.duration_minutes,
-      now,
-    ),
-  );
-
   return (
-    <div className="user-dashboard">
-      <NextCallHero
-        appointment={nextCall}
-        requesterName={profile.full_name}
-      />
-
-      <WeekStrip appointments={weekAppointments ?? []} referenceDate={now} />
-
-      {!hasAnyUpcoming ? (
-        <EmptyState
-          title="Nenhuma chamada agendada"
-          description="Solicite um intérprete quando precisar de apoio em Libras."
-          action={
-            <Link className="user-request-link" href="/app/user/request">
-              Solicitar intérprete <span aria-hidden="true">→</span>
-            </Link>
-          }
-        />
-      ) : null}
-
-      <RequestStatusList appointments={recentAppointments ?? []} />
-    </div>
+    <UserHomeRealtime
+      userId={userId}
+      requesterName={profile.full_name}
+      initialActive={(activeAppointments ?? []) as NextCallAppointment[]}
+      initialWeek={(weekAppointments ?? []) as WeekAppointment[]}
+      initialRecent={(recentAppointments ?? []) as RequestStatusItem[]}
+    />
   );
 }
