@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 
 import { JitsiMeetEmbed } from "@/components/meeting/JitsiMeetEmbed";
 import { LeaveMeetingButton } from "@/components/meeting/LeaveMeetingButton";
+import { MeetingAtmosphere } from "@/components/meeting/MeetingAtmosphere";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
+import { appointmentReasonDisplayLabel } from "@/lib/domain/reasons";
 import {
   getJitsiDomain,
   requiresJitsiHostLogin,
@@ -14,6 +16,12 @@ import { createClient } from "@/lib/supabase/server";
 type MeetingPageProps = {
   params: Promise<{ appointmentId: string }>;
 };
+
+const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 export default async function MeetingPage({ params }: MeetingPageProps) {
   const { appointmentId } = await params;
@@ -38,15 +46,21 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
   const { data: appointment, error: appointmentError } = await supabase
     .from("appointments")
     .select(
-      "id, requester_id, interpreter_id, status, scheduled_at, duration_minutes, jitsi_room_name",
+      "id, requester_id, interpreter_id, status, scheduled_at, duration_minutes, reason_code, reason_custom_title, jitsi_room_name",
     )
     .eq("id", appointmentId)
     .maybeSingle();
 
   if (appointmentError || !appointment) {
     return (
-      <section className="app-panel meeting-page" aria-labelledby="meeting-title">
-        <h1 id="meeting-title">Atendimento não encontrado</h1>
+      <section
+        className="meeting-studio meeting-studio--idle"
+        aria-labelledby="meeting-title"
+      >
+        <p className="auth-eyebrow">Videochamada</p>
+        <h1 id="meeting-title" className="meeting-studio__title">
+          Atendimento não encontrado
+        </h1>
         <p className="meeting-lead" role="alert">
           Verifique o link recebido ou volte ao início.
         </p>
@@ -70,9 +84,14 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
 
   if (!access.ok) {
     return (
-      <section className="app-panel meeting-page" aria-labelledby="meeting-title">
+      <section
+        className="meeting-studio meeting-studio--idle"
+        aria-labelledby="meeting-title"
+      >
         <p className="auth-eyebrow">Videochamada</p>
-        <h1 id="meeting-title">Sala indisponível</h1>
+        <h1 id="meeting-title" className="meeting-studio__title">
+          Sala indisponível
+        </h1>
         <p className="meeting-lead" role="alert">
           {access.reason}
         </p>
@@ -86,14 +105,50 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
   const jitsiDomain = getJitsiDomain();
   const leaveRole =
     appointment.requester_id === userId ? "user" : "interpreter";
+  const scheduledAt = new Date(appointment.scheduled_at);
+  const reason = appointmentReasonDisplayLabel(
+    appointment.reason_code,
+    appointment.reason_custom_title,
+  );
 
   return (
-    <section className="meeting-page meeting-page-live" aria-labelledby="meeting-title">
-      <header className="meeting-page__header">
-        <div>
-          <p className="auth-eyebrow">Videochamada</p>
-          <h1 id="meeting-title">Sala de atendimento</h1>
+    <section
+      className="meeting-studio meeting-studio--live"
+      aria-labelledby="meeting-title"
+    >
+      <MeetingAtmosphere />
+
+      <header className="meeting-studio__chrome">
+        <div className="meeting-studio__identity">
+          <span className="meeting-studio__live">
+            <i aria-hidden="true" />
+            Ao vivo
+          </span>
+          <div className="meeting-studio__heading">
+            <p className="auth-eyebrow">Videochamada</p>
+            <h1 id="meeting-title" className="meeting-studio__title">
+              Sala de atendimento
+            </h1>
+          </div>
         </div>
+
+        <ul className="meeting-studio__meta" aria-label="Detalhes da sessão">
+          <li>
+            <span className="meeting-studio__meta-label">Horário</span>
+            <time dateTime={appointment.scheduled_at}>
+              {timeFormatter.format(scheduledAt)}
+            </time>
+          </li>
+          <li>
+            <span className="meeting-studio__meta-label">Duração</span>
+            <span>{appointment.duration_minutes} min</span>
+          </li>
+          <li>
+            <span className="meeting-studio__meta-label">Motivo</span>
+            <span className="meeting-studio__reason">{reason}</span>
+          </li>
+        </ul>
+
         <LeaveMeetingButton appointmentId={appointment.id} role={leaveRole} />
       </header>
 
@@ -105,11 +160,13 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
         </p>
       ) : null}
 
-      <JitsiMeetEmbed
-        domain={jitsiDomain}
-        roomName={appointment.jitsi_room_name}
-        displayName={profile.full_name.trim() || "Participante"}
-      />
+      <div className="meeting-studio__stage">
+        <JitsiMeetEmbed
+          domain={jitsiDomain}
+          roomName={appointment.jitsi_room_name}
+          displayName={profile.full_name.trim() || "Participante"}
+        />
+      </div>
     </section>
   );
 }
