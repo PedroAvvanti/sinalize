@@ -509,7 +509,6 @@ export function IosDateTimePicker({
             disabled={disabled}
             aria-expanded="true"
             aria-controls={panelId}
-            aria-invalid={invalid ? true : undefined}
             aria-describedby={describedBy}
             onClick={() => setOpen(false)}
           >
@@ -597,7 +596,6 @@ export function IosDateTimePicker({
           aria-haspopup="dialog"
           aria-expanded="false"
           aria-controls={panelId}
-          aria-invalid={invalid ? true : undefined}
           aria-describedby={describedBy}
           onClick={openPicker}
         >

@@ -1,8 +1,9 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 
 import { requestOrCancelAppointmentAction } from "@/actions/cancellations";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { CANCEL_REASONS } from "@/lib/domain/reasons";
 import type { CancellationReasonCode } from "@/types/database";
 
@@ -17,6 +18,7 @@ export function CancelDialog({
   triggerLabel = "Cancelar atendimento",
   onCompleted,
 }: CancelDialogProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
   const reasonId = useId();
   const detailsId = useId();
   const [open, setOpen] = useState(false);
@@ -35,6 +37,8 @@ export function CancelDialog({
     setOpen(false);
     setFeedback(undefined);
   }
+
+  useFocusTrap(dialogRef, open, closeDialog);
 
   function submitCancellation() {
     setFeedback(undefined);
@@ -71,6 +75,7 @@ export function CancelDialog({
       {open ? (
         <div className="cancel-dialog-backdrop" role="presentation" onClick={closeDialog}>
           <div
+            ref={dialogRef}
             className="cancel-dialog"
             role="dialog"
             aria-modal="true"

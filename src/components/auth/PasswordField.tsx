@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type ChangeEventHandler } from "react";
+import { useId, useState, type ChangeEventHandler, type Ref } from "react";
 
 import { FieldError, RequiredMark } from "@/components/forms/FieldError";
 
@@ -16,6 +16,7 @@ type PasswordFieldProps = {
   error?: string | null;
   defaultValue?: string;
   onChange?: ChangeEventHandler<HTMLInputElement>;
+  inputRef?: Ref<HTMLInputElement>;
 };
 
 export function PasswordField({
@@ -30,6 +31,7 @@ export function PasswordField({
   error,
   defaultValue,
   onChange,
+  inputRef,
 }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false);
   const generatedHelpId = useId();
@@ -46,6 +48,7 @@ export function PasswordField({
       </label>
       <div className="auth-password-input">
         <input
+          ref={inputRef}
           id={id}
           name={name}
           type={visible ? "text" : "password"}

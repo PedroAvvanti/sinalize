@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { MIN_PASSWORD_LENGTH } from "../../src/lib/auth/password";
+
 import {
   authMessageFor,
   decideProfileAccess,
@@ -103,7 +105,7 @@ describe("mensagens públicas de autenticação", () => {
 
   it("explica quando a senha é curta demais", () => {
     expect(authMessageFor("password_too_short")).toBe(
-      "A senha deve ter pelo menos 6 caracteres.",
+      `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`,
     );
   });
 

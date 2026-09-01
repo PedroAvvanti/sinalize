@@ -1,4 +1,7 @@
+import { MIN_PASSWORD_LENGTH } from "./password";
 import { homePathForRole, type ProfileRole } from "./roles";
+
+export { MIN_PASSWORD_LENGTH };
 
 type AuthMessageCode =
   | "adult_required"
@@ -12,7 +15,7 @@ const AUTH_MESSAGES: Record<AuthMessageCode, string> = {
   adult_required: "É preciso ter 18 anos ou mais.",
   invalid_public_role: "Escolha um tipo de conta válido.",
   password_mismatch: "As senhas não coincidem.",
-  password_too_short: "A senha deve ter pelo menos 6 caracteres.",
+  password_too_short: `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`,
   profile_unavailable:
     "Sua sessão foi encerrada. Entre novamente ou crie uma conta para continuar.",
   signup_failed:

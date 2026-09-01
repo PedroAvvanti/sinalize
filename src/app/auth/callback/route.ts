@@ -85,6 +85,13 @@ export async function GET(request: NextRequest) {
     return redirectWithCookies(origin, "/login", cookiesToSet);
   }
 
+  if (
+    confirmParams.kind === "token_hash" &&
+    confirmParams.type === "recovery"
+  ) {
+    return redirectWithCookies(origin, "/reset-password", cookiesToSet);
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();

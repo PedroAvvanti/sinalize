@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CancelDialog } from "@/components/appointments/CancelDialog";
+import { NextCallCountdown } from "@/components/appointments/NextCallCountdown";
 import { isWithinMeetingWindow } from "@/lib/domain/meeting-access";
 import { appointmentReasonDisplayLabel } from "@/lib/domain/reasons";
 
@@ -81,7 +82,8 @@ export function NextCallHero({ appointment, requesterName }: NextCallHeroProps) 
   const reason = appointmentReasonDisplayLabel(
     appointment.reason_code,
     appointment.reason_custom_title,
-  );  const canEnter =
+  );
+  const canEnter =
     (appointment.status === "accepted" ||
       appointment.status === "cancel_requested") &&
     isWithinMeetingWindow(scheduledAt, appointment.duration_minutes);
@@ -98,6 +100,12 @@ export function NextCallHero({ appointment, requesterName }: NextCallHeroProps) 
         </div>
         <span className="next-call-status">{statusLabels[appointment.status]}</span>
       </div>
+
+      <NextCallCountdown
+        scheduledAtIso={appointment.scheduled_at}
+        durationMinutes={appointment.duration_minutes}
+        status={appointment.status}
+      />
 
       <div className="next-call-details">
         <p className="next-call-reason">{reason}</p>

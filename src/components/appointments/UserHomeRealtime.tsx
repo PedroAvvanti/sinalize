@@ -8,15 +8,19 @@ import {
   type NextCallAppointment,
 } from "@/components/appointments/NextCallHero";
 import {
+  PendingReviewBanner,
+  type PendingReview,
+} from "@/components/appointments/PendingReviewBanner";
+import {
   RequestStatusList,
   type RequestStatusItem,
 } from "@/components/appointments/RequestStatusList";
 import {
   WeekStrip,
   type WeekAppointment,
+  civilDayKey,
 } from "@/components/appointments/WeekStrip";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { isUpcomingAppointment } from "@/lib/domain/meeting-access";
+import { isWithinMeetingWindow, isUpcomingAppointment } from "@/lib/domain/meeting-access";
 import {
   appointmentBecameAccepted,
   pickNextCall,
@@ -31,12 +35,18 @@ const WEEK_FIELDS = "id, scheduled_at, status";
 const RECENT_FIELDS =
   "id, status, scheduled_at, duration_minutes, reason_code, reason_custom_title";
 
+type AcceptedToastState = {
+  appointmentId: string;
+  canEnter: boolean;
+} | null;
+
 type UserHomeRealtimeProps = {
   userId: string;
   requesterName: string;
   initialActive: NextCallAppointment[];
   initialWeek: WeekAppointment[];
   initialRecent: RequestStatusItem[];
+  pendingReview?: PendingReview | null;
 };
 
 export function UserHomeRealtime({
@@ -45,12 +55,15 @@ export function UserHomeRealtime({
   initialActive,
   initialWeek,
   initialRecent,
+  pendingReview = null,
 }: UserHomeRealtimeProps) {
   const [supabase] = useState(createClient);
   const [activeAppointments, setActiveAppointments] = useState(initialActive);
   const [weekAppointments, setWeekAppointments] = useState(initialWeek);
   const [recentAppointments, setRecentAppointments] = useState(initialRecent);
-  const [acceptedToast, setAcceptedToast] = useState(false);
+  const [acceptedToast, setAcceptedToast] = useState<AcceptedToastState>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const previousActiveRef = useRef(initialActive);
 
   useEffect(() => {
@@ -59,8 +72,8 @@ export function UserHomeRealtime({
     }
 
     const timeoutId = window.setTimeout(() => {
-      setAcceptedToast(false);
-    }, 5000);
+      setAcceptedToast(null);
+    }, 8000);
 
     return () => {
       window.clearTimeout(timeoutId);
@@ -104,14 +117,32 @@ export function UserHomeRealtime({
       }
 
       if (activeResult.error || weekResult.error || recentResult.error) {
+        setRefreshError(
+          "Não foi possível atualizar seus atendimentos. Recarregue a página.",
+        );
         return;
       }
+
+      setRefreshError(null);
 
       const nextActive = (activeResult.data ?? []) as NextCallAppointment[];
       const nextRecent = (recentResult.data ?? []) as RequestStatusItem[];
 
       if (appointmentBecameAccepted(previousActiveRef.current, nextActive)) {
-        setAcceptedToast(true);
+        const accepted = nextActive.find(
+          (appointment) => appointment.status === "accepted",
+        );
+
+        if (accepted) {
+          const canEnter = isWithinMeetingWindow(
+            new Date(accepted.scheduled_at),
+            accepted.duration_minutes,
+          );
+          setAcceptedToast({
+            appointmentId: accepted.id,
+            canEnter,
+          });
+        }
       }
 
       previousActiveRef.current = nextActive;
@@ -144,39 +175,66 @@ export function UserHomeRealtime({
 
   const now = new Date();
   const nextCall = pickNextCall(activeAppointments, now);
-  const hasAnyUpcoming = activeAppointments.some((appointment) =>
-    isUpcomingAppointment(
-      new Date(appointment.scheduled_at),
-      appointment.duration_minutes,
-      now,
-    ),
-  );
+
+  const filteredRecent = selectedDayKey
+    ? recentAppointments.filter(
+        (appointment) =>
+          civilDayKey(new Date(appointment.scheduled_at)) === selectedDayKey,
+      )
+    : recentAppointments;
 
   return (
     <div className="user-dashboard">
-      {acceptedToast ? (
-        <p className="user-home-toast" role="status" aria-live="polite">
-          Intérprete aceitou seu pedido
+      {refreshError ? (
+        <p className="user-dashboard-error" role="alert">
+          {refreshError}
         </p>
+      ) : null}
+
+      {acceptedToast ? (
+        <div className="user-home-toast" role="status" aria-live="polite">
+          <p>Intérprete aceitou seu pedido.</p>
+          <div className="user-home-toast__actions">
+            {acceptedToast.canEnter ? (
+              <Link
+                className="user-home-toast__link"
+                href={`/app/meeting/${acceptedToast.appointmentId}`}
+              >
+                Entrar na chamada
+              </Link>
+            ) : (
+              <Link
+                className="user-home-toast__link"
+                href="/app/user"
+              >
+                Ver detalhes
+              </Link>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {pendingReview ? (
+        <PendingReviewBanner appointment={pendingReview} />
       ) : null}
 
       <NextCallHero appointment={nextCall} requesterName={requesterName} />
 
-      <WeekStrip appointments={weekAppointments} referenceDate={now} />
+      <WeekStrip
+        appointments={weekAppointments}
+        referenceDate={now}
+        selectedDayKey={selectedDayKey}
+        onSelectDay={setSelectedDayKey}
+      />
 
-      {!hasAnyUpcoming ? (
-        <EmptyState
-          title="Nenhuma chamada agendada"
-          description="Solicite um intérprete quando precisar de apoio em Libras."
-          action={
-            <Link className="user-request-link" href="/app/user/request">
-              Solicitar intérprete <span aria-hidden="true">→</span>
-            </Link>
-          }
-        />
-      ) : null}
-
-      <RequestStatusList appointments={recentAppointments} />
+      <RequestStatusList
+        appointments={filteredRecent}
+        emptyMessage={
+          selectedDayKey
+            ? "Nenhum pedido recente neste dia."
+            : undefined
+        }
+      />
     </div>
   );
 }

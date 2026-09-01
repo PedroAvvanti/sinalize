@@ -44,6 +44,10 @@ export default async function LoginPage({
         <LoginForm nextPath={nextPath} />
 
         <p className="auth-switch">
+          <Link href="/forgot-password">Esqueci minha senha</Link>
+        </p>
+
+        <p className="auth-switch">
           Ainda não tem conta? <Link href="/signup">Cadastre-se</Link>
         </p>
       </section>

@@ -51,6 +51,8 @@ Execute os arquivos em `supabase/migrations/` **na ordem do nome**, no SQL Edito
 4. `20260731142200_cancellation_rpc.sql`
 5. `20260731143000_decide_cancellation_rpc.sql`
 6. `20260731144500_enable_notifications_realtime.sql`
+7. `20260826120000_appointment_reason_custom_title.sql`
+8. `20260826150000_appointment_duration_any_positive.sql`
 
 Confirme também que o bucket `certificates` existe (criado na migration inicial) e que Realtime está habilitado nas tabelas `appointments` e `notifications`.
 
@@ -97,7 +99,7 @@ Crie três contas de e-mail distintas para simular o fluxo completo:
 Ordem sugerida de demonstração:
 
 1. Admin aprova o intérprete.
-2. Usuário solicita atendimento (15, 30 ou 60 min).
+2. Usuário solicita atendimento (duração sugerida: 15, 30 ou 60 min; outros valores também são aceitos).
 3. Intérprete aceita na fila ao vivo.
 4. Ambos entram em `/app/meeting/[id]` na janela (10 min antes até o fim).
 5. Qualquer participante encerra → avaliação mútua em `/app/review/[id]`.
@@ -111,6 +113,19 @@ Ordem sugerida de demonstração:
 - Rota `/app/meeting/[appointmentId]` valida participante, status e janela de horário no servidor.
 - Gravação desabilitada no embed.
 - **Segurança MVP:** nome de sala opaco + gate na rota; quem souber o nome ainda poderia tentar entrar direto no Meet — aceitável para MVP acadêmico gratuito.
+
+## Recuperação de senha
+
+1. Na tela de login, use **Esqueci minha senha**.
+2. Informe o e-mail cadastrado.
+3. Abra o link recebido e defina uma nova senha (mínimo de 8 caracteres).
+
+Configure no Supabase Auth a URL de redirecionamento para `https://seu-dominio/auth/callback` (e `http://localhost:3000/auth/callback` em desenvolvimento).
+
+## Segurança (MVP)
+
+- Senha mínima de **8 caracteres** no cadastro e na redefinição.
+- Rate limiting básico em login, cadastro, aceitar pedidos e recuperação de senha (por instância do servidor).
 
 ## Verificação
 
@@ -127,7 +142,8 @@ O build usa Webpack (`--webpack`) para compatibilidade com o service worker PWA 
 - **Sem pagamento** — atendimentos gratuitos.
 - **Sem e-mail, SMS ou WhatsApp** — notificações apenas dentro do app (Realtime).
 - **Sem gravação** de chamadas.
-- **Sem app nativo** — PWA instalável no navegador.
+- **PWA instalável** — `start_url` aponta para `/app` (redireciona conforme sessão/papel).
+- **Página offline** em `/offline` quando não há rede.
 - **Sem vídeos em Libras** na interface — motivos em lista + texto opcional.
 - **Admin manual** — não há auto-cadastro público de administrador.
 - **Expiração/conclusão automática** roda ao carregar dashboards (não há cron dedicado).

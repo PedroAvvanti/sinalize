@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useId, useRef, useState, type FormEvent } from "react";
 
-import { finalizeSignupRoleAction } from "@/actions/auth";
+import { finalizeSignupRoleAction, assertSignupRateLimitAction } from "@/actions/auth";
 import { PasswordField } from "@/components/auth/PasswordField";
 import { FieldError, RequiredMark } from "@/components/forms/FieldError";
 import {
@@ -11,12 +11,12 @@ import {
   validatePasswordConfirmation,
   validateSignupEligibility,
 } from "@/lib/auth/policy";
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password";
 import { homePathForRole, type ProfileRole } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/client";
 
 const PASSWORD_MISMATCH = authMessageFor("password_mismatch");
 const PASSWORD_TOO_SHORT = authMessageFor("password_too_short");
-const MIN_PASSWORD_LENGTH = 6;
 
 type FormValues = {
   full_name: string;
@@ -220,6 +220,13 @@ export function SignupForm() {
     }
 
     const role = eligibility.role as Exclude<ProfileRole, "admin">;
+
+    const rateLimit = await assertSignupRateLimitAction(email);
+    if (!rateLimit.ok) {
+      fail(nextValues, { error: rateLimit.error });
+      return;
+    }
+
     setPending(true);
     setState({ values: nextValues });
 
@@ -323,7 +330,7 @@ export function SignupForm() {
         name="password"
         label="Senha"
         describedBy="password-help"
-        help="Use pelo menos 6 caracteres."
+        help={`Use pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`}
         error={passwordError}
         defaultValue={values.password}
         onChange={clearPasswordErrors}

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 import {
   buildJitsiRoomName,
@@ -15,6 +16,10 @@ import {
 } from "@/lib/domain/reasons";
 import { appointmentEndsAt } from "@/lib/domain/meeting-access";
 import { canMarkAppointmentCompleted } from "@/lib/domain/meeting-leave";
+import {
+  checkRateLimit,
+  rateLimitErrorMessage,
+} from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -126,6 +131,18 @@ export async function acceptAppointmentAction(
     return {
       ok: false,
       message: "Sua sessão expirou. Entre novamente para aceitar o pedido.",
+    };
+  }
+
+  const headerList = await headers();
+  const forwarded = headerList.get("x-forwarded-for");
+  const ip = forwarded?.split(",")[0]?.trim() || "local";
+  const limit = checkRateLimit(`accept-appointment:${userId}:${ip}`, 20, 60 * 1000);
+
+  if (!limit.ok) {
+    return {
+      ok: false,
+      message: rateLimitErrorMessage(limit.retryAfterSeconds),
     };
   }
 

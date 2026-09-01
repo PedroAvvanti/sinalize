@@ -25,6 +25,8 @@ import {
   appointmentReasonFormLabel,
 } from "@/lib/domain/reasons";
 
+const DURATION_PRESETS = [15, 30, 60] as const;
+
 function minimumLocalDateTime() {
   const now = new Date(Date.now() + 60_000);
   now.setSeconds(0, 0);
@@ -256,7 +258,7 @@ export function AppointmentRequestForm() {
                     <button
                       type="button"
                       role="option"
-                      aria-selected={reason.value === "outro"}
+                      aria-selected={reason.value === reasonCode}
                       className={
                         reason.value === "outro"
                           ? "reason-combobox__option reason-combobox__option--active"
@@ -306,6 +308,27 @@ export function AppointmentRequestForm() {
           Duração (minutos)
           <RequiredMark />
         </label>
+        <div className="duration-presets" role="group" aria-label="Durações sugeridas">
+          {DURATION_PRESETS.map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              className={
+                durationMinutes === String(preset)
+                  ? "duration-presets__chip duration-presets__chip--active"
+                  : "duration-presets__chip"
+              }
+              disabled={isPending}
+              aria-pressed={durationMinutes === String(preset)}
+              onClick={() => {
+                setDurationMinutes(String(preset));
+                clearFieldError("durationMinutes");
+              }}
+            >
+              {preset} min
+            </button>
+          ))}
+        </div>
         <input
           ref={durationRef}
           id="durationMinutes"
@@ -331,7 +354,11 @@ export function AppointmentRequestForm() {
             id={durationErrorId}
             message={fieldErrors.durationMinutes}
           />
-        ) : null}
+        ) : (
+          <span className="appointment-field-hint">
+            Sugestões: 15, 30 ou 60 minutos. Você também pode informar outro valor.
+          </span>
+        )}
       </div>
 
       <div

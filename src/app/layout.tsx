@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 
 import { SmoothScrollProvider } from "@/components/layout/SmoothScrollProvider";
+import { LandingThemeScript } from "@/components/theme/LandingThemeScript";
 
 import "./globals.css";
 
@@ -52,11 +53,13 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      data-theme="light"
       lang="pt-BR"
       className={`${fraunces.variable} ${plusJakarta.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <LandingThemeScript />
+      </head>
       <body>
         <SmoothScrollProvider>
           <a className="skip-link" href="#main-content">

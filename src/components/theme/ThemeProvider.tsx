@@ -38,6 +38,11 @@ export function ThemeProvider({
 
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem("sinalize-theme", theme);
+    } catch {
+      // ignore storage errors
+    }
   }, [theme]);
 
   const value = useMemo(() => ({ theme, setTheme }), [theme]);

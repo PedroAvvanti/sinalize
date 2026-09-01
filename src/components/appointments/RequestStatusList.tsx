@@ -13,6 +13,7 @@ export type RequestStatusItem = Pick<
 
 type RequestStatusListProps = {
   appointments: RequestStatusItem[];
+  emptyMessage?: string;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -32,9 +33,23 @@ const statusLabels: Record<
   expired: "Expirado",
 };
 
-export function RequestStatusList({ appointments }: RequestStatusListProps) {
+export function RequestStatusList({
+  appointments,
+  emptyMessage,
+}: RequestStatusListProps) {
   if (appointments.length === 0) {
-    return null;
+    if (!emptyMessage) {
+      return null;
+    }
+
+    return (
+      <section className="request-status-list" aria-labelledby="request-status-title">
+        <h2 id="request-status-title">Seus pedidos recentes</h2>
+        <p className="request-status-empty" role="status">
+          {emptyMessage}
+        </p>
+      </section>
+    );
   }
 
   return (

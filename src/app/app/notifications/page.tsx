@@ -35,7 +35,7 @@ export default async function NotificationsPage() {
       <p className="notifications-lead">
         Avisos sobre candidaturas, atendimentos e cancelamentos ficam aqui.
       </p>
-      <NotificationsList notifications={notifications} />
+      <NotificationsList notifications={notifications} role={profile.role} />
     </section>
   );
 }

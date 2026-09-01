@@ -116,7 +116,7 @@ export async function proxy(request: NextRequest) {
 
   const { destination: homePath, role } = profileAccess;
 
-  if (pathname === "/login" || pathname === "/signup" || pathname === "/confirm" || pathname === "/app") {
+  if (pathname === "/login" || pathname === "/signup" || pathname === "/confirm" || pathname === "/forgot-password" || pathname === "/app") {
     return redirectWithCookies(
       response,
       new URL(homePath, request.url),
@@ -162,5 +162,13 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/app/:path*", "/login", "/signup", "/confirm"],
+  matcher: [
+    "/",
+    "/app/:path*",
+    "/login",
+    "/signup",
+    "/confirm",
+    "/forgot-password",
+    "/reset-password",
+  ],
 };

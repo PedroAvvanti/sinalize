@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AppointmentHistoryList } from "@/components/appointments/AppointmentHistoryList";
+import { HistoryBoard } from "@/components/appointments/HistoryBoard";
 import { profileUnavailableLoginPath } from "@/lib/auth/policy";
 import { createClient } from "@/lib/supabase/server";
 
@@ -34,10 +34,11 @@ export default async function UserHistoryPage() {
     .from("appointments")
     .select(
       "id, status, scheduled_at, duration_minutes, reason_code, reason_custom_title",
-    )    .eq("requester_id", userId)
+    )
+    .eq("requester_id", userId)
     .in("status", HISTORY_STATUSES)
     .order("scheduled_at", { ascending: false })
-    .limit(50);
+    .limit(100);
 
   return (
     <section className="app-panel history-page" aria-labelledby="history-title">
@@ -54,10 +55,7 @@ export default async function UserHistoryPage() {
           Não foi possível carregar o histórico. Recarregue a página.
         </p>
       ) : (
-        <AppointmentHistoryList
-          appointments={appointments ?? []}
-          showReviewLink
-        />
+        <HistoryBoard appointments={appointments ?? []} />
       )}
 
       <Link className="next-call-secondary" href="/app/user">

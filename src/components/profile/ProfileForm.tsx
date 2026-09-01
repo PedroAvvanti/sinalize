@@ -5,6 +5,7 @@ import { useId, useRef, useState, useTransition } from "react";
 import { updateProfileAction } from "@/actions/profile";
 import { FieldError, RequiredMark } from "@/components/forms/FieldError";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { StarRating } from "@/components/ui/StarRating";
 
 type ProfileFormProps = {
   initialName: string;
@@ -71,7 +72,9 @@ export function ProfileForm({
         {averageRating !== null ? (
           <div>
             <dt>Média de avaliações</dt>
-            <dd>{averageRating.toFixed(2)}</dd>
+            <dd>
+              <StarRating value={averageRating} label={`Média ${averageRating.toFixed(1)} de 5`} />
+            </dd>
           </div>
         ) : null}
       </dl>

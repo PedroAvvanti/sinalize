@@ -2,11 +2,15 @@ import Link from "next/link";
 
 type AuthBackLinkProps = {
   href?: string;
+  label?: string;
 };
 
-export function AuthBackLink({ href = "/" }: AuthBackLinkProps) {
+export function AuthBackLink({
+  href = "/",
+  label = "Voltar ao início",
+}: AuthBackLinkProps) {
   return (
-    <Link className="auth-back" href={href} aria-label="Voltar ao início">
+    <Link className="auth-back" href={href} aria-label={label}>
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path
           d="M15 6l-6 6 6 6"

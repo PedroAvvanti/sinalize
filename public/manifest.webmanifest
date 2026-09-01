@@ -2,7 +2,7 @@
   "name": "Sinalize",
   "short_name": "Sinalize",
   "description": "Conexão entre pessoas surdas e intérpretes de Libras por videochamadas agendadas.",
-  "start_url": "/",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f5f8ff",

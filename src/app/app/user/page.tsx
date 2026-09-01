@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import type { NextCallAppointment } from "@/components/appointments/NextCallHero";
+import type { PendingReview } from "@/components/appointments/PendingReviewBanner";
 import type { RequestStatusItem } from "@/components/appointments/RequestStatusList";
 import { UserHomeRealtime } from "@/components/appointments/UserHomeRealtime";
 import type { WeekAppointment } from "@/components/appointments/WeekStrip";
@@ -46,6 +46,8 @@ export default async function UserHomePage() {
     { data: activeAppointments, error: activeError },
     { data: weekAppointments, error: weekError },
     { data: recentAppointments, error: recentError },
+    { data: completedAppointments },
+    { data: userReviews },
   ] = await Promise.all([
     supabase
       .from("appointments")
@@ -70,6 +72,19 @@ export default async function UserHomePage() {
       .eq("requester_id", userId)
       .order("created_at", { ascending: false })
       .limit(5),
+    supabase
+      .from("appointments")
+      .select(
+        "id, scheduled_at, duration_minutes, reason_code, reason_custom_title, interpreter_id",
+      )
+      .eq("requester_id", userId)
+      .eq("status", "completed")
+      .order("updated_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("reviews")
+      .select("appointment_id")
+      .eq("from_profile_id", userId),
   ]);
 
   if (activeError || weekError || recentError) {
@@ -84,6 +99,39 @@ export default async function UserHomePage() {
     );
   }
 
+  const reviewedIds = new Set(
+    (userReviews ?? []).map((review) => review.appointment_id),
+  );
+  const pendingReviewRow =
+    (completedAppointments ?? []).find(
+      (appointment) => !reviewedIds.has(appointment.id),
+    ) ?? null;
+
+  let pendingReview: PendingReview | null = null;
+
+  if (pendingReviewRow) {
+    let interpreterName: string | null = null;
+
+    if (pendingReviewRow.interpreter_id) {
+      const { data: interpreter } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", pendingReviewRow.interpreter_id)
+        .maybeSingle();
+
+      interpreterName = interpreter?.full_name ?? null;
+    }
+
+    pendingReview = {
+      id: pendingReviewRow.id,
+      scheduled_at: pendingReviewRow.scheduled_at,
+      duration_minutes: pendingReviewRow.duration_minutes,
+      reason_code: pendingReviewRow.reason_code,
+      reason_custom_title: pendingReviewRow.reason_custom_title,
+      interpreter_name: interpreterName,
+    };
+  }
+
   return (
     <UserHomeRealtime
       userId={userId}
@@ -91,6 +139,7 @@ export default async function UserHomePage() {
       initialActive={(activeAppointments ?? []) as NextCallAppointment[]}
       initialWeek={(weekAppointments ?? []) as WeekAppointment[]}
       initialRecent={(recentAppointments ?? []) as RequestStatusItem[]}
+      pendingReview={pendingReview}
     />
   );
 }
